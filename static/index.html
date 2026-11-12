@@ -1,0 +1,3021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Windows Volume Controller</title>
+  <meta name="theme-color" content="#090d16">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Volume">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Volume">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(20, 27, 44, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #3b82f6;
+      --accent-grad: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+      --text: #f8fafc;
+      --text-muted: #8492a6;
+      --danger: #ef4444;
+      --danger-grad: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%);
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.1) 0%, transparent 45%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      touch-action: manipulation;
+    }
+
+    /* Container: Uses 100% viewport width and height, NO page vertical scroll */
+    .container {
+      width: 100%;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 10px 14px;
+      gap: 10px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 4px;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand span.net-info {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+      font-family: monospace;
+    }
+
+    /* Mobile Segmented View Switcher (Only visible on narrow mobile < 768px) */
+    .mobile-view-tabs {
+      display: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .view-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .view-tab-btn.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* Master Volume Tile: Slim & Tactile */
+    .master-tile {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(20px);
+      border-radius: 18px;
+      padding: 10px 16px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .master-tile:active {
+      transform: scale(0.99);
+    }
+
+    .master-tile.is-muted {
+      border-color: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.15);
+    }
+
+    .volume-fill-bg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.28) 0%, rgba(139, 92, 246, 0.22) 100%);
+      pointer-events: none;
+      transition: width 0.08s linear;
+      border-right: 2px solid rgba(147, 197, 253, 0.6);
+      z-index: 1;
+    }
+
+    .master-tile.is-muted .volume-fill-bg,
+    .app-tile.is-muted .volume-fill-bg {
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.25) 0%, rgba(244, 63, 94, 0.15) 100%);
+      border-right-color: rgba(248, 113, 113, 0.5);
+    }
+
+    .master-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .master-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .master-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent-grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .master-tile.is-muted .master-icon-wrap {
+      background: var(--danger-grad);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+    }
+
+    .master-icon-wrap svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .master-info h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .master-info p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .master-percent {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: all 0.2s;
+    }
+
+    .master-tile.is-muted .master-percent {
+      color: var(--danger) !important;
+      -webkit-text-fill-color: var(--danger) !important;
+      background: none;
+      font-size: 1.6rem;
+    }
+
+    /* Horizontal Slider Track */
+    .tile-slider-bar {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      margin-top: 6px;
+      padding: 3px 0;
+    }
+
+    .tile-slider-track {
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      position: relative;
+    }
+
+    .tile-slider-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent-grad);
+      position: relative;
+      transition: width 0.08s linear;
+      min-width: 4px;
+    }
+
+    .is-muted .tile-slider-fill {
+      background: var(--danger-grad);
+    }
+
+    .tile-slider-thumb {
+      position: absolute;
+      right: -7px;
+      top: 50%;
+      transform: translateY(-50%) scale(0.85);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 2px 6px rgba(0,0,0,0.4);
+      opacity: 0.8;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .is-sliding .tile-slider-thumb {
+      transform: translateY(-50%) scale(1.35);
+      opacity: 1;
+      box-shadow: 0 0 16px rgba(147, 197, 253, 1), 0 3px 8px rgba(0,0,0,0.6);
+    }
+
+    /* Tile Growth & Sliding State */
+    .master-tile.is-sliding,
+    .app-tile.is-sliding {
+      transform: scale(1.05) translateY(-3px) !important;
+      z-index: 100 !important;
+      border-color: rgba(96, 165, 250, 0.95) !important;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(59, 130, 246, 0.45) !important;
+      cursor: ew-resize;
+    }
+
+    .master-tile.is-muted.is-sliding,
+    .app-tile.is-muted.is-sliding {
+      border-color: rgba(248, 113, 113, 0.95) !important;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 30px rgba(239, 68, 68, 0.45) !important;
+    }
+
+    /* Dashboard Viewport: 2 Columns on Desktop, Zero Vertical Page Scroll */
+    .dashboard-viewport {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .dashboard-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 10px 12px;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+
+    .panel-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .section-sub {
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.15);
+      padding: 1px 7px;
+      border-radius: 999px;
+    }
+
+    .panel-hint {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    .deck-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .deck-action-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .deck-action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .deck-action-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .add-shortcut-btn {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.4);
+    }
+
+    .add-shortcut-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .panel-scroll-wrap {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 3px;
+    }
+
+    /* Thin Custom Scrollbars */
+    .panel-scroll-wrap::-webkit-scrollbar,
+    .suggestions-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .panel-scroll-wrap::-webkit-scrollbar-track,
+    .suggestions-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .panel-scroll-wrap::-webkit-scrollbar-thumb,
+    .suggestions-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+    }
+    .panel-scroll-wrap::-webkit-scrollbar-thumb:hover,
+    .suggestions-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(59, 130, 246, 0.5);
+    }
+
+    /* Applications Grid */
+    .tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+      gap: 10px;
+      padding: 2px;
+    }
+
+    /* Application Tile */
+    .app-tile {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(14px);
+      border-radius: 16px;
+      min-height: 106px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  border-color 0.2s ease,
+                  box-shadow 0.2s ease;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      user-select: none;
+      touch-action: pan-y;
+      will-change: transform, box-shadow;
+    }
+
+    .app-tile:active {
+      transform: scale(0.97);
+    }
+
+    .app-tile.is-muted {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(30, 20, 28, 0.7);
+    }
+
+    .app-tile-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: relative;
+      z-index: 2;
+    }
+
+    .app-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+    }
+
+    .app-avatar svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .app-tile.is-muted .app-avatar {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .app-pct-badge {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+
+    .app-tile.is-muted .app-pct-badge {
+      color: var(--danger);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .app-tile-bottom {
+      position: relative;
+      z-index: 2;
+      margin-top: 6px;
+    }
+
+    .app-title-text {
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .app-sub-text {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .recent-tag {
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    /* Shortcuts Grid & Cards */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 10px;
+      padding: 2px;
+    }
+
+    .shortcut-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      transition: all 0.15s ease;
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+      min-height: 54px;
+    }
+
+    .shortcut-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .shortcut-card:active {
+      transform: scale(0.97);
+    }
+
+    .shortcut-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .shortcut-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .shortcut-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .shortcut-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    /* Shortcuts Deck Editing Mode */
+    .shortcuts-grid.editing-mode .shortcut-card {
+      border: 1px dashed rgba(59, 130, 246, 0.85) !important;
+      background: rgba(30, 41, 59, 0.85) !important;
+      cursor: grab;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+    }
+
+    .shortcuts-grid.editing-mode .shortcut-card.dragging {
+      opacity: 0.4;
+      transform: scale(0.95);
+    }
+
+    .shortcut-edit-controls {
+      display: none;
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 2px 3px;
+      gap: 2px;
+      z-index: 10;
+    }
+
+    .shortcuts-grid.editing-mode .shortcut-card .shortcut-edit-controls {
+      display: flex;
+    }
+
+    .sc-ctrl-btn {
+      background: none;
+      border: none;
+      color: var(--text);
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+      transition: background 0.1s;
+    }
+
+    .sc-ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .sc-ctrl-btn.sc-del-btn:hover {
+      background: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    /* Mobile Responsive Viewport Rules (< 768px) */
+    @media (max-width: 767px) {
+      .container {
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .mobile-view-tabs {
+        display: flex !important;
+      }
+      .dashboard-viewport {
+        display: flex;
+        flex-direction: column;
+      }
+      .dashboard-viewport[data-active-view="apps"] .panel-apps {
+        display: flex;
+        flex: 1;
+      }
+      .dashboard-viewport[data-active-view="apps"] .panel-shortcuts {
+        display: none;
+      }
+      .dashboard-viewport[data-active-view="shortcuts"] .panel-shortcuts {
+        display: flex;
+        flex: 1;
+      }
+      .dashboard-viewport[data-active-view="shortcuts"] .panel-apps {
+        display: none;
+      }
+      .dashboard-viewport[data-active-view="split"] .panel-apps,
+      .dashboard-viewport[data-active-view="split"] .panel-shortcuts {
+        display: flex;
+        height: 50%;
+        flex: 1;
+      }
+    }
+
+    /* Floating Horizontal Slider HUD Pill */
+    .slider-hud-pill {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-25px) scale(0.9);
+      background: rgba(15, 23, 42, 0.94);
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 30px rgba(59, 130, 246, 0.4);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 8px 20px;
+      border-radius: 999px;
+      z-index: 2500;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .slider-hud-pill.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+
+    .hud-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hud-arrow {
+      font-size: 1rem;
+      color: var(--accent);
+      user-select: none;
+    }
+
+    .hud-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      max-width: 140px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hud-vol {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      background: var(--accent-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .hud-hint {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Modal / QR */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 3000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #141b2c;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      max-height: 90vh;
+      overflow: hidden;
+    }
+
+    .modal-box h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .modal-tabs {
+      display: flex;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .modal-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 7px 10px;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .modal-tab-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .suggestions-scroll {
+      max-height: 360px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+      width: 100%;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 9px 12px;
+      gap: 10px;
+      transition: background 0.12s ease;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .suggestion-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .suggestion-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 0.95rem;
+    }
+
+    .suggestion-texts {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .suggestion-name {
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text);
+    }
+
+    .suggestion-desc {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .suggestion-add-btn {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .suggestion-add-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .suggestion-add-btn.added {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.4);
+      cursor: default;
+    }
+
+    #qrcode-box {
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .url-chip {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+      word-break: break-all;
+    }
+
+    .close-btn {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      background: var(--card-bg);
+      border: 1px dashed var(--card-border);
+      border-radius: 16px;
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    /* Voice Assistant Button & HUD */
+    .voice-btn {
+      position: relative;
+    }
+    .voice-btn.active {
+      background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%) !important;
+      border-color: #f87171 !important;
+      color: white !important;
+      animation: pulseMic 1.4s infinite alternate;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6) !important;
+    }
+    @keyframes pulseMic {
+      0% { transform: scale(1); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+      100% { transform: scale(1.08); box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+    }
+    .voice-hud {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-40px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(239, 68, 68, 0.6);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.35);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 8px 18px;
+      border-radius: 999px;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90vw;
+    }
+    .voice-hud.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+    .voice-waves {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 16px;
+    }
+    .voice-wave-bar {
+      width: 3px;
+      height: 5px;
+      background: #ef4444;
+      border-radius: 999px;
+      animation: wave 0.8s infinite ease-in-out;
+    }
+    .voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    @keyframes wave {
+      0%, 100% { height: 4px; }
+      50% { height: 16px; }
+    }
+    .voice-text {
+      font-size: 0.85rem;
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .voice-stop-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+    }
+
+    /* Discord Button & Modal */
+    .discord-btn {
+      position: relative;
+      border-color: rgba(88, 101, 242, 0.4);
+    }
+    .discord-btn:hover, .discord-btn.active {
+      border-color: #5865F2;
+      box-shadow: 0 0 14px rgba(88, 101, 242, 0.5);
+    }
+    .discord-online-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+    }
+    .discord-action-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      margin: 8px 0;
+    }
+    .discord-action-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .discord-action-card:hover {
+      border-color: #5865F2;
+      background: rgba(88, 101, 242, 0.15);
+      transform: translateY(-2px);
+    }
+    .discord-action-card:active {
+      transform: scale(0.96);
+    }
+    .discord-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .discord-card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+    .discord-card-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    /* Action Feedback Toast */
+    .action-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(40px);
+      background: rgba(16, 185, 129, 0.95);
+      color: white;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 8px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 20px rgba(16, 185, 129, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 4000;
+      white-space: nowrap;
+    }
+    .action-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <h1>🔊 Volume Mixer</h1>
+        <span class="net-info" id="net-label">Connecting...</span>
+      </div>
+
+      <!-- Mobile Segmented View Switcher (Visible on mobile screens < 768px) -->
+      <div class="mobile-view-tabs" id="mobile-view-tabs">
+        <button class="view-tab-btn active" data-view="apps" id="view-apps-btn">🎵 Apps</button>
+        <button class="view-tab-btn" data-view="shortcuts" id="view-shortcuts-btn">⚡ Deck</button>
+        <button class="view-tab-btn" data-view="split" id="view-split-btn">Split</button>
+      </div>
+
+      <div class="header-btns">
+        <button class="icon-btn voice-btn" id="voice-btn" title="Voice Assistant (NLP)">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+          </svg>
+        </button>
+        <button class="icon-btn discord-btn" id="discord-btn" title="Discord Voice Controls" style="display: none;">
+          <svg viewBox="0 0 24 24" fill="#5865F2" width="18" height="18">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+          </svg>
+          <span class="discord-online-dot"></span>
+        </button>
+        <button class="icon-btn" id="install-btn" title="Install App to Home Screen">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="qr-open-btn" title="Phone Connect QR Code">
+          <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Master Volume Bar: Full Width & Compact -->
+    <div class="master-tile" id="master-tile">
+      <div class="volume-fill-bg" id="master-fill" style="width: 100%;"></div>
+      <div class="master-content">
+        <div class="master-left">
+          <div class="master-icon-wrap" id="master-icon-wrap">
+            <svg id="master-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+          </div>
+          <div class="master-info">
+            <h2>Master Volume</h2>
+            <p id="master-desc">Tap to Mute &bull; Slide Horizontal for Volume</p>
+          </div>
+        </div>
+        <div class="master-percent" id="master-percent">100%</div>
+      </div>
+      <div class="tile-slider-bar">
+        <div class="tile-slider-track">
+          <div class="tile-slider-fill" id="master-slider-fill" style="width: 100%;">
+            <div class="tile-slider-thumb"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Viewport Area: NO vertical scroll on outer page -->
+    <main class="dashboard-viewport" id="dashboard-viewport" data-active-view="apps">
+      
+      <!-- Panel 1: Applications -->
+      <section class="dashboard-panel panel-apps" id="panel-apps">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="section-title">Applications</span>
+            <span class="section-sub" id="app-counter">0 Active</span>
+          </div>
+          <span class="panel-hint">Tap to Mute &bull; Slide for Vol</span>
+        </div>
+        <div class="panel-scroll-wrap">
+          <div class="tiles-grid" id="apps-grid">
+            <div class="empty-state">
+              No active audio applications playing sound.<br>
+              Open Spotify, Discord, YouTube, or a game to control it individually.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Quick Actions & Shortcuts Deck -->
+      <section class="dashboard-panel panel-shortcuts" id="panel-shortcuts">
+        <div class="panel-header">
+          <div class="panel-header-left">
+            <span class="section-title">Quick Actions</span>
+            <span class="section-sub" id="shortcuts-counter">Deck</span>
+          </div>
+          <div class="deck-actions">
+            <button class="deck-action-btn edit-deck-btn" id="deck-edit-btn">✏️ Edit Deck</button>
+            <button class="deck-action-btn add-shortcut-btn" id="add-shortcut-btn">+ Add Action</button>
+          </div>
+        </div>
+        <div class="panel-scroll-wrap">
+          <div class="shortcuts-grid" id="shortcuts-grid">
+            <!-- Dynamic shortcut cards rendered here -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Floating Horizontal Slider HUD Pill -->
+  <div class="slider-hud-pill" id="slider-hud">
+    <div class="hud-content">
+      <span class="hud-arrow hud-arrow-left">◀</span>
+      <span class="hud-name" id="hud-name">Master Volume</span>
+      <span class="hud-vol" id="hud-vol">100%</span>
+      <span class="hud-arrow hud-arrow-right">▶</span>
+    </div>
+    <div class="hud-hint">Slide ◄ Left to Decrease &bull; Right to Increase ►</div>
+  </div>
+
+  <!-- Voice Floating HUD Pill -->
+  <div class="voice-hud" id="voice-hud">
+    <div class="voice-waves">
+      <span class="voice-wave-bar"></span>
+      <span class="voice-wave-bar"></span>
+      <span class="voice-wave-bar"></span>
+      <span class="voice-wave-bar"></span>
+    </div>
+    <div class="voice-text" id="voice-text">Listening... Speak now</div>
+    <button class="voice-stop-btn" id="voice-stop-btn" title="Stop listening">✕</button>
+  </div>
+
+  <!-- Action Feedback Toast -->
+  <div class="action-toast" id="action-toast">
+    <span id="toast-icon">✓</span>
+    <span id="toast-msg">Action triggered</span>
+  </div>
+
+  <!-- Discord Control Modal -->
+  <div class="modal-overlay" id="discord-modal">
+    <div class="modal-box" style="max-width: 420px; width: 95vw; text-align: left; padding: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" fill="#5865F2" width="24" height="24">
+            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+          </svg>
+          <h2 style="font-size: 1.05rem;">Discord Voice Hub</h2>
+        </div>
+        <div id="discord-rpc-status-badge" style="font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #94a3b8; display: flex; align-items: center; gap: 5px;">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;"></span> Hotkey Fallback
+        </div>
+      </div>
+
+      <!-- Segmented Navigation (Controls / RPC Settings) -->
+      <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 10px; padding: 3px; gap: 4px; margin-bottom: 12px;">
+        <button id="discord-tab-controls-btn" class="view-tab-btn active" style="flex: 1; border-radius: 8px;">Voice Controls</button>
+        <button id="discord-tab-setup-btn" class="view-tab-btn" style="flex: 1; border-radius: 8px;">Native RPC Setup</button>
+      </div>
+
+      <!-- Controls View -->
+      <div id="discord-view-controls">
+        <div class="discord-action-cards" style="margin-top: 0;">
+          <div class="discord-action-card" id="discord-mute-card">
+            <div class="discord-card-icon" id="discord-mute-icon-bg" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+              </svg>
+            </div>
+            <div class="discord-card-title" id="discord-mute-title">Microphone</div>
+            <div class="discord-card-sub" id="discord-mute-sub">Live</div>
+          </div>
+
+          <div class="discord-action-card" id="discord-deafen-card">
+            <div class="discord-card-icon" id="discord-deafen-icon-bg" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                <path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/>
+              </svg>
+            </div>
+            <div class="discord-card-title" id="discord-deafen-title">Deafen</div>
+            <div class="discord-card-sub" id="discord-deafen-sub">Active</div>
+          </div>
+        </div>
+
+        <div id="discord-mode-hint" style="width: 100%; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-top: 6px;">
+          ⚡ <b>Hotkey Fallback Active</b>: Toggling sends simulated global keystrokes. Switch to <b>Native RPC Setup</b> to unlock real-time mute detection directly from Discord's local API.
+        </div>
+      </div>
+
+      <!-- Native RPC Setup View -->
+      <div id="discord-view-setup" style="display: none;">
+        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
+          Connect to Discord Desktop's local RPC engine (port 6463) to read and change mute/deafen states with 0ms latency without simulated keystrokes.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Application Client ID</label>
+            <input type="text" id="discord-client-id-input" placeholder="e.g. 123456789012345678" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 7px 9px; border-radius: 8px; font-size: 0.8rem; font-family: monospace; outline: none;">
+          </div>
+          <div>
+            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Application Client Secret</label>
+            <input type="password" id="discord-client-secret-input" placeholder="Paste Client Secret from Discord Developer Portal" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 7px 9px; border-radius: 8px; font-size: 0.8rem; font-family: monospace; outline: none;">
+          </div>
+        </div>
+
+        <div style="background: rgba(88, 101, 242, 0.08); border: 1px solid rgba(88, 101, 242, 0.25); border-radius: 8px; padding: 8px; font-size: 0.7rem; color: #c7d2fe; line-height: 1.4; margin-bottom: 10px;">
+          <b>Quick Setup Guide (1 Minute):</b><br>
+          1. Go to <a href="https://discord.com/developers/applications" target="_blank" style="color: #60a5fa; text-decoration: underline;">discord.com/developers/applications</a> and click <b>New Application</b>.<br>
+          2. Under <b>OAuth2 &rarr; Redirects</b>, add <code>https://localhost/</code> and save.<br>
+          3. Copy <b>Client ID</b> and <b>Client Secret</b>, paste above, and tap <b>Link Discord Desktop</b> below!
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="discord-rpc-connect-btn" class="close-btn" style="flex: 1; height: 34px; background: #5865F2; font-size: 0.78rem;">🔗 Link Discord Desktop</button>
+          <button id="discord-rpc-disconnect-btn" class="close-btn" style="width: 90px; height: 34px; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); font-size: 0.78rem;">Unlink</button>
+        </div>
+      </div>
+
+      <button class="close-btn" id="discord-close-btn" style="margin-top: 10px; width: 100%;">Done</button>
+    </div>
+  </div>
+
+  <!-- Add / Edit Shortcut Modal with Suggestions & Custom Builder -->
+  <div class="modal-overlay" id="shortcut-modal">
+    <div class="modal-box" style="max-width: 460px; width: 95vw; text-align: left; padding: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 6px;">
+        <h2 id="modal-shortcut-title" style="font-size: 1.15rem;">⚡ Actions & Shortcuts</h2>
+        <button class="icon-btn" id="sc-modal-close-x" style="width: 30px; height: 30px; font-size: 0.85rem;">✕</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="tab-suggestions-btn">⭐ 1-Click Suggestions (<span id="suggestions-count">16</span>)</button>
+        <button class="modal-tab-btn" id="tab-custom-btn">🛠️ Custom Action</button>
+      </div>
+
+      <!-- Tab 1: Suggestions List -->
+      <div id="tab-suggestions-view" style="display: block; width: 100%;">
+        <p style="font-size: 0.74rem; color: var(--text-muted); margin-bottom: 8px;">Tap "+ Add" to pin any action to your home screen.</p>
+        <div class="suggestions-scroll" id="suggestions-list">
+          <!-- Dynamically populated 16 suggestions -->
+        </div>
+      </div>
+
+      <!-- Tab 2: Custom Action Form -->
+      <div id="tab-custom-view" style="display: none; width: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+          <input type="hidden" id="sc-edit-id" value="">
+          <div>
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Shortcut Name</label>
+            <input type="text" id="sc-name-input" placeholder="e.g. Focus Layout, Mute Zoom" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+          </div>
+
+          <div>
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Action Type</label>
+            <select id="sc-type-select" style="width: 100%; background: #1a2236; border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+              <option value="stack_apps">Stack Apps on Screen (Screen 2 / Screen 1)</option>
+              <option value="hotkey">Send Global Hotkey / Media Key</option>
+              <option value="command">Run Windows Command / App</option>
+              <option value="obs_record">Toggle OBS Studio Recording</option>
+              <option value="discord_mute">Toggle Discord Mute</option>
+              <option value="discord_deafen">Toggle Discord Deafen</option>
+              <option value="lock_pc">Lock Windows PC</option>
+              <option value="mute_master">Panic Mute Master Audio</option>
+            </select>
+          </div>
+
+          <!-- Dynamic fields for stack_apps -->
+          <div id="sc-field-stack" style="display: block;">
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Target Screen</label>
+            <select id="sc-screen-select" style="width: 100%; background: #1a2236; border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none; margin-bottom: 6px;">
+              <option value="2">Screen 2 (Vertical Portrait: 1080x1920)</option>
+              <option value="1">Screen 1 (Primary Landscape: 2560x1440)</option>
+            </select>
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Apps to launch & stack (comma separated)</label>
+            <input type="text" id="sc-apps-input" value="notepad.exe, calc.exe, cmd.exe" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+          </div>
+
+          <!-- Dynamic fields for hotkey -->
+          <div id="sc-field-hotkey" style="display: none;">
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Key Combination</label>
+            <input type="text" id="sc-hotkey-input" placeholder="e.g. ctrl+shift+m, playpause, win+d" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+          </div>
+
+          <!-- Dynamic fields for command -->
+          <div id="sc-field-command" style="display: none;">
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Command or Path</label>
+            <input type="text" id="sc-cmd-input" placeholder="e.g. explorer.exe, code, chrome.exe" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 8px 10px; border-radius: 8px; font-size: 0.85rem; outline: none;">
+          </div>
+
+          <div>
+            <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Emoji / Icon</label>
+            <input type="text" id="sc-icon-input" value="⚡" style="width: 50px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 6px; border-radius: 8px; font-size: 1rem; outline: none;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; width: 100%; margin-top: 10px;">
+          <button class="close-btn" id="sc-save-btn" style="flex: 1; height: 38px;">Save Shortcut</button>
+          <button class="close-btn" id="sc-cancel-btn" style="background: rgba(255,255,255,0.1); color: var(--text-muted); width: 80px; height: 38px;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal-box">
+      <h2>Connect Your Phone</h2>
+      <p style="font-size: 0.8rem; color: var(--text-muted);">Connect your phone to the same Wi-Fi network and scan this QR code.</p>
+      <div id="qrcode-box"></div>
+      <div class="url-chip" id="modal-url">http://...</div>
+      <button class="close-btn" id="qr-close-btn" style="margin-top: 8px;">Done</button>
+    </div>
+  </div>
+
+  <!-- Install Help Modal -->
+  <div class="modal-overlay" id="install-modal">
+    <div class="modal-box" style="text-align: left; max-width: 380px;">
+      <h2 style="text-align: center;">📲 Install on Mobile Chrome</h2>
+      <p style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;">
+        Android Chrome requires a secure origin to install PWAs. For local home Wi-Fi (<code style="color: #93c5fd;">http://192.168.x.x</code>), use one of these quick options:
+      </p>
+
+      <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px; margin: 6px 0; font-size: 0.76rem; line-height: 1.5;">
+        <b style="color: #60a5fa;">Option 1: 10-Second Chrome Flag (Best)</b><br>
+        1. Open a new tab in phone Chrome and go to:<br>
+        <code style="background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 4px; color: #93c5fd; word-break: break-all; display: block; margin: 3px 0; font-size: 0.72rem;">chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>
+        2. In the text box, paste your server URL:<br>
+        <code id="install-server-url" style="background: rgba(0,0,0,0.4); padding: 2px 5px; border-radius: 4px; color: #34d399; word-break: break-all; display: block; margin: 3px 0; font-size: 0.72rem;">http://...</code>
+        3. Change dropdown to <b>Enabled</b> and tap <b>Relaunch</b>.<br>
+        4. Revisit this page and tap <b>Install</b>!
+      </div>
+
+      <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px; margin: 6px 0; font-size: 0.76rem; line-height: 1.5;">
+        <b style="color: #a78bfa;">Option 2: Browser Menu</b><br>
+        Tap Chrome's <b>⋮</b> (three dots) menu at top right &rarr; tap <b>"Add to Home screen"</b>.
+      </div>
+
+      <button class="close-btn" id="install-close-btn" style="margin-top: 4px;">Got It</button>
+    </div>
+  </div>
+
+  <!-- Embedded Vanilla QR Code Engine -->
+  <script>
+    var QRCode;!function(){function a(a){this.mode=4,this.data=a,this.parsedData=[];for(var b=[],c=0,d=this.data.length;c<d;c++){var e=this.data.charCodeAt(c);e>65536?(b.push(240|e>>18&7),b.push(128|e>>12&63),b.push(128|e>>6&63),b.push(128|e&63)):e>2048?(b.push(224|e>>12&15),b.push(128|e>>6&63),b.push(128|e&63)):e>128?(b.push(192|e>>6&3),b.push(128|e&63)):b.push(e)}this.parsedData=b}function b(a,b){this.typeNumber=a,this.errorCorrectionLevel=b,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function c(a,b){for(var c=0;c<a.length&&0==a[c];)c++;for(var d=new Array(a.length-c+b),e=0;e<a.length-c;e++)d[e]=a[e+c];return d}function d(a,b,c){for(var d=1;d<=c;d++)if(a.getBestCodeLength(d)<=b)return d;throw new Error("code length overflow")}var e={};e.QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,735,565,439],[1091,815,611,461],[1171,865,661,511],[1273,940,715,535],[1367,1020,751,593],[1465,1088,805,625],[1528,1130,868,658],[1628,1190,908,698],[1732,1264,982,742],[1843,1353,1033,790],[1955,1439,1115,842],[2071,1538,1174,898],[2191,1618,1276,958],[2306,1708,1351,983],[2434,1803,1423,1051],[2566,1861,1499,1093],[2702,1994,1579,1139],[2812,2070,1652,1219],[2956,2152,1733,1273]];e.BitBuffer=function(){this.buffer=[],this.length=0};e.BitBuffer.prototype={get:function(a){return 1==(this.buffer[Math.floor(a/8)]>>>7-a%8&1)},put:function(a,b){for(var c=0;c<b;c++)this.putBit(1==(a>>>b-c-1&1))},lengthInBits:function(){return this.length},putBit:function(a){var b=Math.floor(this.length/8);this.buffer.length<=b&&this.buffer.push(0),a&&(this.buffer[b]|=128-this.length%8),this.length++}};var f={createFromBytes:function(a,b){return new e.Polynomial(a,b)},glog:function(a){return f.LOG_TABLE[a]},gexp:function(a){return f.EXP_TABLE[a]},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)};for(var g=0;8>g;g++)f.EXP_TABLE[g]=1<<g;for(var g=8;256>g;g++)f.EXP_TABLE[g]=f.EXP_TABLE[g-4]^f.EXP_TABLE[g-5]^f.EXP_TABLE[g-6]^f.EXP_TABLE[g-8];for(var g=0;255>g;g++)f.LOG_TABLE[f.EXP_TABLE[g]]=g;e.Polynomial=function(a,b){if(void 0==a.length)throw new Error(a.length+"/"+b);for(var c=0;c<a.length&&0==a[c];)c++;this.num=new Array(a.length-c+b);for(var d=0;d<a.length-c;d++)this.num[d]=a[d+c]};e.Polynomial.prototype={get:function(a){return this.num[a]},getLength:function(){return this.num.length},multiply:function(a){for(var b=new Array(this.getLength()+a.getLength()-1),c=0;c<this.getLength();c++)for(var d=0;d<a.getLength();d++)b[c+d]^=f.gexp(f.glog(this.get(c))+f.glog(a.get(d)));return new e.Polynomial(b,0)},mod:function(a){if(this.getLength()-a.getLength()<0)return this;for(var b=f.glog(this.get(0))-f.glog(a.get(0)),c=new Array(this.getLength()),d=0;d<this.getLength();d++)c[d]=this.get(d);for(var d=0;d<a.getLength();d++)c[d]^=f.gexp(f.glog(a.get(d))+b);return new e.Polynomial(c,0).mod(a)}};var h={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7};b.prototype={addData:function(b){var c=new a(b);this.dataList.push(c),this.dataCache=null},isDark:function(a,b){return this.modules[a][b]},getModuleCount:function(){return this.moduleCount},make:function(){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var a=0;a<this.moduleCount;a++){this.modules[a]=new Array(this.moduleCount);for(var c=0;c<this.moduleCount;c++)this.modules[a][c]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(!1,0),this.typeNumber>=7&&this.setupTypeNumber(!1),null==this.dataCache&&(this.dataCache=b.createData(this.typeNumber,this.errorCorrectionLevel,this.dataList)),this.mapData(this.dataCache,0)},setupPositionProbePattern:function(a,b){for(var c=-1;7>=c;c++)if(!(-1>=a+c||this.moduleCount<=a+c))for(var d=-1;7>=d;d++)-1>=b+d||this.moduleCount<=b+d||(this.modules[a+c][b+d]=c>=0&&6>=c&&(0==d||6==d)||d>=0&&6>=d&&(0==c||6==c)||c>=2&&4>=c&&d>=2&&4>=d?!0:!1)},setupTimingPattern:function(){for(var a=8;a<this.moduleCount-8;a++)null==this.modules[a][6]&&(this.modules[a][6]=0==a%2);for(var b=8;b<this.moduleCount-8;b++)null==this.modules[6][b]&&(this.modules[6][b]=0==b%2)},setupPositionAdjustPattern:function(){var a=b.getPatternPosition(this.typeNumber);for(var c=0;c<a.length;c++)for(var d=0;d<a.length;d++){var e=a[c],f=a[d];if(null==this.modules[e][f])for(var g=-2;2>=g;g++)for(var h=-2;2>=h;h++)this.modules[e+g][f+h]=-2==g||2==g||-2==h||2==h||0==g&&0==h?!0:!1}},setupTypeNumber:function(a){for(var b=this.getBCHTypeNumber(),c=0;18>c;c++){var d=!a&&1==(b>>c&1);this.modules[Math.floor(c/3)][c%3+this.moduleCount-8-3]=d}for(var c=0;18>c;c++){var d=!a&&1==(b>>c&1);this.modules[c%3+this.moduleCount-8-3][Math.floor(c/3)]=d}},setupTypeInfo:function(a,b){for(var c=this.errorCorrectionLevel<<3|b,d=this.getBCHTypeInfo(c),e=0;15>e;e++){var f=!a&&1==(d>>e&1);6>e?this.modules[e][8]=f:8>e?this.modules[e+1][8]=f:this.modules[this.moduleCount-15+e][8]=f}for(var e=0;15>e;e++){var f=!a&&1==(d>>e&1);8>e?this.modules[8][this.moduleCount-e-1]=f:9>e?this.modules[8][15-e-1+1]=f:this.modules[8][15-e-1]=f}this.modules[this.moduleCount-8][8]=!a},mapData:function(a,b){for(var c=-1,d=this.moduleCount-1,e=7,f=0,g=this.moduleCount-1;g>0;g-=2)for(6==g&&g--;;){for(var h=0;2>h;h++)if(null==this.modules[d][g-h]){var i=!1;f<a.length&&(i=1==(a[f]>>>e&1));var j=0==((d+g-h)%2);j&&(i=!i),this.modules[d][g-h]=i,e--,-1==e&&(f++,e=7)}if(d+=c,0>d||this.moduleCount<=d){d-=c,c=-c;break}}},getBCHTypeInfo:function(a){for(var b=a<<10;b-this.getBCHTypeInfo(b)>=0;);return b},getBCHTypeNumber:function(){for(var a=this.typeNumber<<12;a-this.getBCHTypeNumber(a)>=0;);return a}};b.createData=function(a,b,c){for(var d=new e.BitBuffer,f=0;f<c.length;f++){var g=c[f];d.put(g.mode,4),d.put(g.data.length,8);for(var h=0;h<g.parsedData.length;h++)d.put(g.parsedData[h],8)}var i=e.QRCodeLimitLength[a-1][b];for(;d.lengthInBits()%8!=0;)d.putBit(!1);for(;d.lengthInBits()<8*i;)d.put(236,8),d.lengthInBits()<8*i&&d.put(17,8);return d.buffer};b.getPatternPosition=function(a){return[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,50,74,98,122,146,170],[6,30,54,78,102,126,150,174],[6,34,58,82,106,130,154,178],[6,30,54,78,102,126,150,174,198]][a-1]};QRCode=function(a,c){this.el=typeof a=="string"?document.getElementById(a):a;var d=typeof c=="string"?c:c.text;this.makeCode(d)};QRCode.prototype.makeCode=function(a){try{var c=new b(4,1);c.addData(a),c.make();var d=document.createElement("canvas"),e=c.getModuleCount(),f=180,g=Math.floor(f/e);d.width=e*g,d.height=e*g;var h=d.getContext("2d");h.fillStyle="#ffffff",h.fillRect(0,0,d.width,d.height);for(var i=0;e>i;i++)for(var j=0;e>j;j++)c.isDark(i,j)&&(h.fillStyle="#000000",h.fillRect(j*g,i*g,g,g));this.el.innerHTML="",this.el.appendChild(d)}catch(k){this.el.innerHTML="<p style='color:#333;font-size:12px;'>"+a+"</p>"}};
+    }();
+  </script>
+
+  <!-- Application Logic & Controllers -->
+  <script>
+    // State Persistence Keys in localStorage
+    const STATE_KEY = 'volume_mixer_state';
+    const SHORTCUTS_KEY = 'volume_mixer_shortcuts';
+    const VIEW_KEY = 'volume_mixer_view';
+    const RECENCY_KEY = 'volume_mixer_recency';
+
+    // Global Inactivity & Sleep State
+    let isSleeping = false;
+
+    // Application Icons Library (SVG Paths)
+    function getAppSvg(name, displayName) {
+      const n = (name + " " + displayName).toLowerCase();
+      if (n.includes('spotify')) {
+        return `<svg viewBox="0 0 24 24" fill="#1DB954"><path d="M12 2C6.477 2 2 6.477 2 12c0 5.524 4.477 10 10 10s10-4.476 10-10c0-5.523-4.477-10-10-10zm4.586 14.424c-.18.295-.563.387-.857.207-2.35-1.435-5.308-1.76-8.793-.963-.335.077-.67-.133-.746-.468-.077-.334.132-.67.467-.746 3.809-.87 7.076-.496 9.722 1.115.294.18.386.563.207.855zm1.226-2.724c-.227.367-.71.482-1.077.255-2.69-1.653-6.79-2.133-9.972-1.168-.413.125-.853-.107-.978-.52-.125-.413.107-.853.52-.978 3.633-1.103 8.147-.568 11.252 1.336.368.226.483.71.255 1.075zm.106-2.835C14.692 8.95 9.37 8.775 6.297 9.71c-.495.15-1.026-.13-1.176-.625-.15-.494.13-1.026.624-1.176 3.532-1.073 9.404-.866 13.115 1.338.445.264.59 1.05.326 1.495-.264.444-1.05.59-1.494.325z"/></svg>`;
+      }
+      if (n.includes('discord')) {
+        return `<svg viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`;
+      }
+      if (n.includes('chrome')) {
+        return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#EA4335"/><circle cx="12" cy="12" r="7" fill="#FBBC05"/><circle cx="12" cy="12" r="4.5" fill="#34A853"/><circle cx="12" cy="12" r="2.8" fill="#4285F4"/></svg>`;
+      }
+      if (n.includes('steam')) {
+        return `<svg viewBox="0 0 24 24" fill="#00adee"><path d="M12 2a10 10 0 0 0-10 10 10 10 0 0 0 .08.97l5.37 2.21a3.5 3.5 0 0 0 3.25-.68l3.18 1.31A2.5 2.5 0 1 0 16.5 13l-1.32-3.18a3.5 3.5 0 0 0-.68-3.25L12 2zm4.5 13a1 1 0 1 1 0-2 1 1 0 0 1 0 2zM9 14.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>`;
+      }
+      if (n.includes('cs2') || n.includes('csgo') || n.includes('counter')) {
+        return `<svg viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 17.93V17h-2v2.93A8 8 0 0 1 4.07 13H7v-2H4.07A8 8 0 0 1 11 4.07V7h2V4.07A8 8 0 0 1 19.93 11H17v2h2.93A8 8 0 0 1 13 19.93zM12 9a3 3 0 1 0 3 3 3 3 0 0 0-3-3z"/></svg>`;
+      }
+      if (n.includes('firefox')) {
+        return `<svg viewBox="0 0 24 24" fill="#ff7139"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm5.7 6.3a8 8 0 0 1-1.3 7.8 7.9 7.9 0 0 1-6.1 3.4 8 8 0 0 1-5.8-2.6 8 8 0 0 1 9.8-11.4 6 6 0 0 0-2.6 2.8 5 5 0 0 1 6-0z"/></svg>`;
+      }
+      if (n.includes('edge') || n.includes('msedge')) {
+        return `<svg viewBox="0 0 24 24" fill="#0078D7"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm6 11c-.5 3-3 5-6 5a6 6 0 0 1-6-6c0-3.3 2.7-6 6-6 1 0 2.5.5 3.5 1.5l-2 2A3 3 0 0 0 12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4c2 0 3.5-1 4-2.5h-4v-2.5h6z"/></svg>`;
+      }
+      if (n.includes('nv') || n.includes('nvidia')) {
+        return `<svg viewBox="0 0 24 24" fill="#76B900"><path d="M7 6v12h10V6H7zm8 10H9V8h6v8zm-7-9V5h8v2H8zm8 12H8v-2h8v2z"/></svg>`;
+      }
+      if (n.includes('system') || n.includes('audio') || n.includes('windows')) {
+        return `<svg viewBox="0 0 24 24" fill="#00a4ef"><path d="M3 5.5l7-1v7l-7 .1zm0 7.5l7 .1v7l-7-1.1zm8-8.7l10-1.3v9l-10 .1zm0 8.7l10 .1v9l-10-1.3z"/></svg>`;
+      }
+      if (n.includes('vlc') || n.includes('media') || n.includes('player')) {
+        return `<svg viewBox="0 0 24 24" fill="#ff8800"><path d="M12 2L4 18h16L12 2zm0 5l4.5 9h-9L12 7zM3 20h18v2H3z"/></svg>`;
+      }
+      return `<svg viewBox="0 0 24 24" fill="#94a3b8"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V8h16v10z"/><circle cx="7" cy="13" r="1.5"/><circle cx="12" cy="13" r="1.5"/><circle cx="17" cy="13" r="1.5"/></svg>`;
+    }
+
+    // Shortcut Icons Library
+    function getShortcutIconHtml(iconName) {
+      if (!iconName) return '⚡';
+      const map = {
+        'layout_vertical': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h16v4H4V4zm0 6h16v4H4v-4zm0 6h16v4H4v-4z"/></svg>',
+        'layout_horizontal': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h7v16H4V4zm9 0h7v16h-7V4z"/></svg>',
+        'record': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg>',
+        'mic_off': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>',
+        'headphones': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/></svg>',
+        'play_pause': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+        'next': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>',
+        'prev': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6V6zm3.5 6l8.5 6V6l-8.5 6z"/></svg>',
+        'desktop': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>',
+        'lock': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>',
+        'camera': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>',
+        'cpu': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 2v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V7c0-1.1-.9-2-2-2h-2V2h-2v2h-2V2H9zm8 15H7V7h10v10z"/></svg>',
+        'volume_off': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>',
+        'globe': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm7.93 9h-3.18a15.77 15.77 0 0 0-1.39-5.06A8.02 8.02 0 0 1 19.93 11zM12 4.07c.97 1.48 1.77 3.65 2.13 6.93H9.87c.36-3.28 1.16-5.45 2.13-6.93zm-3.36 1.87A15.77 15.77 0 0 0 7.25 11H4.07a8.02 8.02 0 0 1 4.57-5.06zM4.07 13h3.18a15.77 15.77 0 0 0 1.39 5.06A8.02 8.02 0 0 1 4.07 13zm7.93 6.93c-.97-1.48-1.77-3.65-2.13-6.93h4.26c-.36 3.28-1.16 5.45-2.13 6.93zm3.36-1.87a15.77 15.77 0 0 0 1.39-5.06h3.18a8.02 8.02 0 0 1-4.57 5.06z"/></svg>',
+        'music': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>',
+        'gamepad': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>',
+        'cube': '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>',
+        'code': '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>',
+        'terminal': '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>',
+        'folder': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>',
+        'edit': '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
+        'sparkles': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2zm7 15l1.2 2.8L23 21l-2.8 1.2L19 25l-1.2-2.8L15 21l2.8-1.2L19 17zm-14 0l1.2 2.8L9 21l-2.8 1.2L5 25l-1.2-2.8L1 21l2.8-1.2L5 17z"/></svg>',
+        'star': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
+        'trash': '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
+      };
+      return map[iconName] || iconName;
+    }
+
+    // Recency Tracker in localStorage
+    function getRecencyMap() {
+      try {
+        return JSON.parse(localStorage.getItem(RECENCY_KEY)) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+    function touchRecency(key) {
+      const map = getRecencyMap();
+      map[key] = Date.now();
+      try {
+        localStorage.setItem(RECENCY_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
+
+    // State Variables
+    let currentMasterVolume = 100;
+    let currentMasterMuted = false;
+    let localSessions = [];
+    let currentShortcuts = [];
+    let isEditingDeck = false;
+    let isDraggingGesture = false;
+
+    // Gesture Controller for Volume Sliders
+    let activePointerId = null;
+    let activeTarget = null;
+    let activeTileElement = null;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerStartTime = 0;
+    let holdTimer = null;
+    let hasMovedNoticeably = false;
+    const HOLD_THRESHOLD_MS = 160;
+
+    const sliderHud = document.getElementById('slider-hud');
+    const hudName = document.getElementById('hud-name');
+    const hudVol = document.getElementById('hud-vol');
+
+    function startGesture(targetInfo, clientX, clientY, pointerId, element) {
+      activePointerId = pointerId;
+      activeTarget = targetInfo;
+      activeTileElement = element;
+      pointerStartX = clientX;
+      pointerStartY = clientY;
+      pointerStartTime = Date.now();
+      hasMovedNoticeably = false;
+      isDraggingGesture = false;
+
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        activateSlider();
+      }, HOLD_THRESHOLD_MS);
+    }
+
+    function activateSlider() {
+      if (!activeTarget || !activeTileElement) return;
+      isDraggingGesture = true;
+      haptic(35);
+      activeTileElement.classList.add('is-sliding');
+      if (sliderHud) {
+        sliderHud.classList.add('active');
+        updateHudUI(activeTarget.currentVol, activeTarget.name, activeTarget.muted);
+      }
+    }
+
+    function moveGesture(clientX, clientY, e) {
+      if (!activeTarget || !activeTileElement) return;
+      const deltaX = clientX - pointerStartX;
+      const deltaY = clientY - pointerStartY;
+
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        hasMovedNoticeably = true;
+      }
+      if (Math.abs(deltaX) > 8 && !isDraggingGesture) {
+        clearTimeout(holdTimer);
+        activateSlider();
+      }
+
+      if (isDraggingGesture) {
+        if (e && e.cancelable) e.preventDefault();
+        const volChange = Math.round((deltaX / 180) * 100);
+        let newVol = Math.max(0, Math.min(100, activeTarget.startVol + volChange));
+
+        if (newVol !== activeTarget.currentVol) {
+          activeTarget.currentVol = newVol;
+          if (newVol > 0 && activeTarget.muted) activeTarget.muted = false;
+
+          if (activeTarget.type === 'master') {
+            updateMasterUI(newVol, activeTarget.muted);
+          } else {
+            updateAppTileLive(activeTarget.pid, newVol, activeTarget.muted);
+          }
+          updateHudUI(newVol, activeTarget.name, activeTarget.muted);
+          sendLiveVolume(activeTarget.type, activeTarget.pid, newVol);
+        }
+      }
+    }
+
+    function endGesture() {
+      clearTimeout(holdTimer);
+      if (!activeTarget) return;
+
+      const duration = Date.now() - pointerStartTime;
+      if (!isDraggingGesture && !hasMovedNoticeably && duration < HOLD_THRESHOLD_MS + 120) {
+        haptic(30);
+        executeMuteToggle(activeTarget.type, activeTarget.pid);
+      } else if (isDraggingGesture) {
+        haptic(20);
+        sendLiveVolume(activeTarget.type, activeTarget.pid, activeTarget.currentVol);
+      }
+
+      if (activeTileElement) activeTileElement.classList.remove('is-sliding');
+      if (sliderHud) sliderHud.classList.remove('active');
+
+      activeTarget = null;
+      activeTileElement = null;
+      activePointerId = null;
+      isDraggingGesture = false;
+      hasMovedNoticeably = false;
+    }
+
+    function updateHudUI(vol, name, muted) {
+      if (!sliderHud) return;
+      if (hudName) hudName.textContent = name || 'Volume';
+      if (hudVol) hudVol.textContent = muted ? 'MUTED' : `${vol}%`;
+    }
+
+    function haptic(ms = 25) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(ms); } catch (e) {}
+      }
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      if (activePointerId !== null && e.pointerId === activePointerId) {
+        moveGesture(e.clientX, e.clientY, e);
+      }
+    }, { passive: false });
+
+    window.addEventListener('pointerup', (e) => {
+      if (activePointerId !== null && e.pointerId === activePointerId) {
+        endGesture();
+      }
+    });
+
+    window.addEventListener('pointercancel', () => endGesture());
+
+    // Master Tile Elements & Events
+    const masterTile = document.getElementById('master-tile');
+    const masterFill = document.getElementById('master-fill');
+    const masterSliderFill = document.getElementById('master-slider-fill');
+    const masterPercent = document.getElementById('master-percent');
+    const masterDesc = document.getElementById('master-desc');
+    const appsGrid = document.getElementById('apps-grid');
+    const appCounter = document.getElementById('app-counter');
+    const netLabel = document.getElementById('net-label');
+
+    function updateMasterUI(vol, muted) {
+      if (masterFill) masterFill.style.width = `${vol}%`;
+      if (masterSliderFill) masterSliderFill.style.width = `${vol}%`;
+      if (masterPercent) masterPercent.textContent = muted ? 'MUTED' : `${vol}%`;
+      if (masterTile) masterTile.classList.toggle('is-muted', muted);
+      if (masterDesc) masterDesc.textContent = muted ? '🔇 Muted &bull; Tap to Unmute' : 'Tap to Mute &bull; Slide Horizontal for Volume';
+    }
+
+    masterTile.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      startGesture({
+        type: 'master',
+        pid: 0,
+        name: 'Master Volume',
+        startVol: currentMasterVolume,
+        currentVol: currentMasterVolume,
+        muted: currentMasterMuted
+      }, e.clientX, e.clientY, e.pointerId, masterTile);
+    });
+
+    // API Live Volume Senders
+    let masterDebounceTimer = null;
+    let appDebounceTimers = {};
+
+    function sendLiveVolume(type, pid, volume) {
+      if (type === 'master') {
+        currentMasterVolume = volume;
+        updateMasterUI(volume, currentMasterMuted);
+        clearTimeout(masterDebounceTimer);
+        masterDebounceTimer = setTimeout(async () => {
+          try {
+            await fetch('/api/master', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ volume: volume })
+            });
+          } catch (e) {}
+        }, 20);
+      } else {
+        const s = localSessions.find(x => x.pid === pid);
+        if (s) {
+          s.volume = volume;
+          updateAppTileLive(pid, volume, s.muted);
+        }
+        touchRecency(s ? s.name : pid);
+
+        clearTimeout(appDebounceTimers[pid]);
+        appDebounceTimers[pid] = setTimeout(async () => {
+          try {
+            await fetch('/api/app', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ pid: pid, volume: volume })
+            });
+          } catch (e) {}
+        }, 20);
+      }
+    }
+
+    async function executeMuteToggle(type, pid) {
+      if (type === 'master') {
+        currentMasterMuted = !currentMasterMuted;
+        updateMasterUI(currentMasterVolume, currentMasterMuted);
+        try {
+          const res = await fetch('/api/master', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ muted: currentMasterMuted })
+          });
+          const st = await res.json();
+          renderFullState(st);
+        } catch (e) {}
+      } else {
+        const s = localSessions.find(x => x.pid === pid);
+        const targetMute = s ? !s.muted : true;
+        if (s) {
+          s.muted = targetMute;
+          updateAppTileLive(pid, s.volume, targetMute);
+          touchRecency(s.name);
+        }
+        try {
+          const res = await fetch('/api/app', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ pid: pid, muted: targetMute })
+          });
+          const st = await res.json();
+          renderFullState(st);
+        } catch (e) {}
+      }
+    }
+
+    function updateAppTileLive(pid, vol, muted) {
+      const tile = document.getElementById(`app-tile-${pid}`);
+      if (!tile) return;
+      const fill = tile.querySelector('.volume-fill-bg');
+      const sliderFill = tile.querySelector('.tile-slider-fill');
+      const badge = tile.querySelector('.app-pct-badge');
+      if (fill) fill.style.width = `${vol}%`;
+      if (sliderFill) sliderFill.style.width = `${vol}%`;
+      if (badge) badge.textContent = muted ? 'MUTED' : `${vol}%`;
+      tile.classList.toggle('is-muted', muted);
+    }
+
+    // Render Applications sorted by recency
+    function renderAppsGrid(sessions) {
+      localSessions = sessions || [];
+
+      if (!localSessions || localSessions.length === 0) {
+        if (appCounter) appCounter.textContent = '0 Active';
+        appsGrid.innerHTML = `
+          <div class="empty-state">
+            No active audio applications playing sound.<br>
+            Open Spotify, Discord, YouTube, or a game to control it individually.
+          </div>`;
+        return;
+      }
+
+      if (appCounter) appCounter.textContent = `${localSessions.length} Active`;
+
+      const recency = getRecencyMap();
+      const sorted = [...localSessions].sort((a, b) => {
+        const timeA = recency[a.name] || 0;
+        const timeB = recency[b.name] || 0;
+        return timeB - timeA;
+      });
+
+      const fragment = document.createDocumentFragment();
+      sorted.forEach((app, index) => {
+        const pid = app.pid;
+        const isRecent = index < 3 && (recency[app.name] || 0) > 0;
+
+        const tile = document.createElement('div');
+        tile.className = `app-tile ${app.muted ? 'is-muted' : ''}`;
+        tile.id = `app-tile-${pid}`;
+
+        tile.innerHTML = `
+          <div class="volume-fill-bg" style="width: ${app.volume}%;"></div>
+          <div class="app-tile-top">
+            <div class="app-avatar">
+              ${getAppSvg(app.name, app.displayName)}
+            </div>
+            <div class="app-pct-badge">${app.muted ? 'MUTED' : `${app.volume}%`}</div>
+          </div>
+          <div class="app-tile-bottom">
+            <div class="app-title-text" title="${app.displayName}">${app.displayName}</div>
+            <div class="app-sub-text">
+              <span>${app.name}</span>
+              ${isRecent ? '<span class="recent-tag">Recent</span>' : ''}
+            </div>
+          </div>
+          <div class="tile-slider-bar">
+            <div class="tile-slider-track">
+              <div class="tile-slider-fill" style="width: ${app.volume}%;">
+                <div class="tile-slider-thumb"></div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        tile.addEventListener('pointerdown', (e) => {
+          if (e.button !== 0 && e.pointerType === 'mouse') return;
+          touchRecency(app.name);
+          startGesture({
+            type: 'app',
+            pid: pid,
+            name: app.displayName || app.name,
+            startVol: app.volume,
+            currentVol: app.volume,
+            muted: app.muted
+          }, e.clientX, e.clientY, e.pointerId, tile);
+        });
+
+        fragment.appendChild(tile);
+      });
+
+      appsGrid.innerHTML = '';
+      appsGrid.appendChild(fragment);
+    }
+
+    function renderFullState(state) {
+      if (!state) return;
+      // Persist state to localStorage for instant reload
+      try {
+        localStorage.setItem(STATE_KEY, JSON.stringify(state));
+      } catch (e) {}
+
+      if (state.master && !isDraggingGesture) {
+        currentMasterVolume = state.master.volume;
+        currentMasterMuted = state.master.muted;
+        updateMasterUI(currentMasterVolume, currentMasterMuted);
+      }
+      if (state.sessions && !isDraggingGesture) {
+        renderAppsGrid(state.sessions);
+      }
+    }
+
+    // Polling Sync
+    async function syncState() {
+      if (isDraggingGesture || isSleeping) return;
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const st = await res.json();
+          renderFullState(st);
+          const discordBtn = document.getElementById('discord-btn');
+          if (discordBtn && st.discord_running !== undefined) {
+            discordBtn.style.display = st.discord_running ? 'flex' : 'none';
+          }
+          if (discordModal && discordModal.classList.contains('open')) {
+            loadDiscordStatus();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Toast Notification System
+    let toastTimeout = null;
+    function showToast(msg, icon = '✓', isError = false) {
+      const toast = document.getElementById('action-toast');
+      const iconEl = document.getElementById('toast-icon');
+      const msgEl = document.getElementById('toast-msg');
+      if (!toast) return;
+      if (iconEl) iconEl.textContent = icon;
+      if (msgEl) msgEl.textContent = msg;
+      toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // -----------------------------------------------------------
+    // Discord Integration & Native Local RPC
+    // -----------------------------------------------------------
+    const discordBtn = document.getElementById('discord-btn');
+    const discordModal = document.getElementById('discord-modal');
+    const discordCloseBtn = document.getElementById('discord-close-btn');
+    const discordTabControlsBtn = document.getElementById('discord-tab-controls-btn');
+    const discordTabSetupBtn = document.getElementById('discord-tab-setup-btn');
+    const discordViewControls = document.getElementById('discord-view-controls');
+    const discordViewSetup = document.getElementById('discord-view-setup');
+    const discordRpcStatusBadge = document.getElementById('discord-rpc-status-badge');
+    const discordMuteCard = document.getElementById('discord-mute-card');
+    const discordDeafenCard = document.getElementById('discord-deafen-card');
+    const discordMuteIconBg = document.getElementById('discord-mute-icon-bg');
+    const discordDeafenIconBg = document.getElementById('discord-deafen-icon-bg');
+    const discordMuteTitle = document.getElementById('discord-mute-title');
+    const discordDeafenTitle = document.getElementById('discord-deafen-title');
+    const discordMuteSub = document.getElementById('discord-mute-sub');
+    const discordDeafenSub = document.getElementById('discord-deafen-sub');
+    const discordModeHint = document.getElementById('discord-mode-hint');
+    const discordClientIdInput = document.getElementById('discord-client-id-input');
+    const discordClientSecretInput = document.getElementById('discord-client-secret-input');
+    const discordRpcConnectBtn = document.getElementById('discord-rpc-connect-btn');
+    const discordRpcDisconnectBtn = document.getElementById('discord-rpc-disconnect-btn');
+
+    let currentDiscordStatus = null;
+
+    function setDiscordTab(tab) {
+      if (tab === 'setup') {
+        discordTabSetupBtn?.classList.add('active');
+        discordTabControlsBtn?.classList.remove('active');
+        if (discordViewSetup) discordViewSetup.style.display = 'block';
+        if (discordViewControls) discordViewControls.style.display = 'none';
+      } else {
+        discordTabControlsBtn?.classList.add('active');
+        discordTabSetupBtn?.classList.remove('active');
+        if (discordViewControls) discordViewControls.style.display = 'block';
+        if (discordViewSetup) discordViewSetup.style.display = 'none';
+      }
+    }
+
+    if (discordTabControlsBtn) discordTabControlsBtn.addEventListener('click', () => setDiscordTab('controls'));
+    if (discordTabSetupBtn) discordTabSetupBtn.addEventListener('click', () => setDiscordTab('setup'));
+
+    function updateDiscordUI(status) {
+      if (!status) return;
+      currentDiscordStatus = status;
+
+      // Update Header Badge
+      if (discordRpcStatusBadge) {
+        if (status.mode === 'rpc') {
+          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span> Native RPC Active';
+          discordRpcStatusBadge.style.color = '#86efac';
+          discordRpcStatusBadge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+        } else if (status.rpc_available) {
+          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #60a5fa; box-shadow: 0 0 6px #60a5fa;"></span> RPC Ready (Setup)';
+          discordRpcStatusBadge.style.color = '#93c5fd';
+          discordRpcStatusBadge.style.borderColor = 'rgba(96, 165, 250, 0.4)';
+        } else {
+          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #94a3b8;"></span> Hotkey Fallback';
+          discordRpcStatusBadge.style.color = '#94a3b8';
+          discordRpcStatusBadge.style.borderColor = 'var(--card-border)';
+        }
+      }
+
+      // Update Voice Tiles
+      const vs = status.voice_settings || {};
+      if (discordMuteIconBg && discordMuteTitle && discordMuteSub) {
+        if (vs.mute) {
+          discordMuteIconBg.style.background = 'rgba(239, 68, 68, 0.25)';
+          discordMuteIconBg.style.color = '#ef4444';
+          discordMuteTitle.textContent = 'Unmute Mic';
+          discordMuteSub.textContent = status.mode === 'rpc' ? 'Muted (RPC Native)' : 'Muted';
+        } else {
+          discordMuteIconBg.style.background = 'rgba(16, 185, 129, 0.25)';
+          discordMuteIconBg.style.color = '#10b981';
+          discordMuteTitle.textContent = 'Mute Mic';
+          discordMuteSub.textContent = status.mode === 'rpc' ? 'Live (RPC Native)' : 'Live';
+        }
+      }
+
+      if (discordDeafenIconBg && discordDeafenTitle && discordDeafenSub) {
+        if (vs.deaf) {
+          discordDeafenIconBg.style.background = 'rgba(168, 85, 247, 0.25)';
+          discordDeafenIconBg.style.color = '#c084fc';
+          discordDeafenTitle.textContent = 'Undeafen';
+          discordDeafenSub.textContent = status.mode === 'rpc' ? 'Deafened (RPC Native)' : 'Deafened';
+        } else {
+          discordDeafenIconBg.style.background = 'rgba(59, 130, 246, 0.25)';
+          discordDeafenIconBg.style.color = '#60a5fa';
+          discordDeafenTitle.textContent = 'Deafen';
+          discordDeafenSub.textContent = 'Audio Active';
+        }
+      }
+
+      // Mode Hint
+      if (discordModeHint) {
+        if (status.mode === 'rpc') {
+          discordModeHint.innerHTML = '✨ <b>Native Local RPC Active</b>: Directly communicates with your Discord Desktop client (port 6463) without simulated keystrokes. Real-time mute states are synchronized live.';
+        } else {
+          discordModeHint.innerHTML = '⚡ <b>Hotkey Fallback Active</b>: Toggling sends simulated global keystrokes. Switch to <b>Native RPC Setup</b> to unlock real-time mute detection directly from Discord\'s local API.';
+        }
+      }
+
+      // Input prefill
+      if (discordClientIdInput && status.client_id && !discordClientIdInput.value) {
+        discordClientIdInput.value = status.client_id;
+      }
+    }
+
+    async function loadDiscordStatus() {
+      try {
+        const res = await fetch('/api/discord/status');
+        if (!res.ok) return;
+        const status = await res.json();
+        updateDiscordUI(status);
+        if (discordBtn && status.running !== undefined) {
+          discordBtn.style.display = status.running ? 'flex' : 'none';
+        }
+      } catch (e) {}
+    }
+
+    if (discordBtn && discordModal) {
+      discordBtn.addEventListener('click', () => {
+        discordModal.classList.add('open');
+        setDiscordTab('controls');
+        loadDiscordStatus();
+      });
+    }
+
+    if (discordCloseBtn && discordModal) {
+      discordCloseBtn.addEventListener('click', () => discordModal.classList.remove('open'));
+      discordModal.addEventListener('click', (e) => {
+        if (e.target === discordModal) discordModal.classList.remove('open');
+      });
+    }
+
+    if (discordMuteCard) {
+      discordMuteCard.addEventListener('click', async () => {
+        haptic(35);
+        try {
+          const res = await fetch('/api/discord/mute', { method: 'POST' });
+          const data = await res.json();
+          if (data.settings) updateDiscordUI(data.settings);
+
+          if (data.settings && data.settings.mode === 'rpc') {
+            const isMuted = data.settings.voice_settings ? data.settings.voice_settings.mute : false;
+            showToast(isMuted ? 'Discord Microphone Muted' : 'Discord Microphone Live', isMuted ? '🔴' : '🎙️');
+          } else {
+            showToast('Discord Mute Toggled (Ctrl+Shift+M)', '🎙️');
+          }
+        } catch (e) {
+          showToast('Failed to toggle Discord mute', '✕', true);
+        }
+      });
+    }
+
+    if (discordDeafenCard) {
+      discordDeafenCard.addEventListener('click', async () => {
+        haptic(35);
+        try {
+          const res = await fetch('/api/discord/deafen', { method: 'POST' });
+          const data = await res.json();
+          if (data.settings) updateDiscordUI(data.settings);
+
+          if (data.settings && data.settings.mode === 'rpc') {
+            const isDeaf = data.settings.voice_settings ? data.settings.voice_settings.deaf : false;
+            showToast(isDeaf ? 'Discord Deafened' : 'Discord Undeafened', isDeaf ? '🎧' : '🔊');
+          } else {
+            showToast('Discord Deafen Toggled (Ctrl+Shift+D)', '🎧');
+          }
+        } catch (e) {
+          showToast('Failed to toggle Discord deafen', '✕', true);
+        }
+      });
+    }
+
+    // Discord RPC Link Button
+    if (discordRpcConnectBtn) {
+      discordRpcConnectBtn.addEventListener('click', async () => {
+        const clientId = (discordClientIdInput?.value || '').trim();
+        const clientSecret = (discordClientSecretInput?.value || '').trim();
+
+        if (!clientId || !clientSecret) {
+          showToast('Please enter both Client ID and Client Secret', '⚠️', true);
+          return;
+        }
+
+        haptic(40);
+        showToast('Connecting... Check Discord to Authorize!', '🔗');
+        discordRpcConnectBtn.textContent = '⏳ Authorizing in Discord...';
+        discordRpcConnectBtn.disabled = true;
+
+        try {
+          const res = await fetch('/api/discord/rpc/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
+          });
+          const data = await res.json();
+          discordRpcConnectBtn.textContent = '🔗 Link Discord Desktop';
+          discordRpcConnectBtn.disabled = false;
+
+          if (data.success) {
+            showToast(data.message || 'Linked with Discord Native RPC!', '✓');
+            setDiscordTab('controls');
+            if (data.status) updateDiscordUI(data.status);
+            else loadDiscordStatus();
+          } else {
+            showToast(data.error || 'Authorization failed or timed out', '✕', true);
+          }
+        } catch (e) {
+          discordRpcConnectBtn.textContent = '🔗 Link Discord Desktop';
+          discordRpcConnectBtn.disabled = false;
+          showToast('Connection error linking Discord RPC', '✕', true);
+        }
+      });
+    }
+
+    // Discord RPC Unlink Button
+    if (discordRpcDisconnectBtn) {
+      discordRpcDisconnectBtn.addEventListener('click', async () => {
+        haptic(35);
+        try {
+          const res = await fetch('/api/discord/rpc/disconnect', { method: 'POST' });
+          const data = await res.json();
+          showToast('Unlinked Discord RPC (Switched to Hotkeys)', '✓');
+          if (data.status) updateDiscordUI(data.status);
+          else loadDiscordStatus();
+        } catch (e) {
+          showToast('Failed to unlink Discord RPC', '✕', true);
+        }
+      });
+    }
+
+    // -----------------------------------------------------------
+    // Shortcuts Deck & Editable / Arrangeable Grid
+    // -----------------------------------------------------------
+    const shortcutsGrid = document.getElementById('shortcuts-grid');
+    const shortcutsCounter = document.getElementById('shortcuts-counter');
+    const deckEditBtn = document.getElementById('deck-edit-btn');
+    const addShortcutBtn = document.getElementById('add-shortcut-btn');
+    const shortcutModal = document.getElementById('shortcut-modal');
+    const scModalCloseX = document.getElementById('sc-modal-close-x');
+    const tabSuggestionsBtn = document.getElementById('tab-suggestions-btn');
+    const tabCustomBtn = document.getElementById('tab-custom-btn');
+    const tabSuggestionsView = document.getElementById('tab-suggestions-view');
+    const tabCustomView = document.getElementById('tab-custom-view');
+    const suggestionsList = document.getElementById('suggestions-list');
+    const suggestionsCount = document.getElementById('suggestions-count');
+
+    const scCancelBtn = document.getElementById('sc-cancel-btn');
+    const scSaveBtn = document.getElementById('sc-save-btn');
+    const scTypeSelect = document.getElementById('sc-type-select');
+    const scFieldStack = document.getElementById('sc-field-stack');
+    const scFieldHotkey = document.getElementById('sc-field-hotkey');
+    const scFieldCommand = document.getElementById('sc-field-command');
+
+    let draggedItemIndex = null;
+
+    async function loadShortcuts() {
+      try {
+        const res = await fetch('/api/shortcuts');
+        if (!res.ok) return;
+        currentShortcuts = await res.json();
+        try {
+          localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(currentShortcuts));
+        } catch (e) {}
+        renderShortcuts(currentShortcuts);
+      } catch (e) {}
+    }
+
+    function renderShortcuts(shortcuts) {
+      if (!shortcutsGrid) return;
+      currentShortcuts = shortcuts || [];
+      shortcutsGrid.innerHTML = '';
+      if (shortcutsCounter) {
+        shortcutsCounter.textContent = `${currentShortcuts.length} Actions`;
+      }
+
+      shortcutsGrid.classList.toggle('editing-mode', isEditingDeck);
+
+      currentShortcuts.forEach((sc, index) => {
+        const card = document.createElement('div');
+        card.className = 'shortcut-card';
+        card.id = `shortcut-card-${sc.id}`;
+        card.setAttribute('draggable', isEditingDeck ? 'true' : 'false');
+        card.setAttribute('data-index', index);
+
+        const descText = sc.desc || sc.description || sc.action_type || sc.type || '';
+        card.title = descText || sc.name;
+
+        card.innerHTML = `
+          <div class="shortcut-icon" style="background: ${sc.color || 'var(--accent-grad)'};">
+            ${getShortcutIconHtml(sc.icon)}
+          </div>
+          <div class="shortcut-details">
+            <div class="shortcut-name">${sc.name}</div>
+            <div class="shortcut-desc">${descText}</div>
+          </div>
+          <div class="shortcut-edit-controls">
+            <button class="sc-ctrl-btn sc-move-left" title="Move Left" data-idx="${index}">◀</button>
+            <button class="sc-ctrl-btn sc-move-right" title="Move Right" data-idx="${index}">▶</button>
+            <button class="sc-ctrl-btn sc-edit-btn" title="Edit Shortcut" data-id="${sc.id}">✏️</button>
+            <button class="sc-ctrl-btn sc-del-btn" title="Delete Shortcut" data-id="${sc.id}">🗑️</button>
+          </div>
+        `;
+
+        // Execution click (when not editing)
+        card.addEventListener('click', async (e) => {
+          if (isEditingDeck) return;
+          haptic(30);
+          try {
+            const res = await fetch(`/api/shortcuts/run/${sc.id}`, { method: 'POST' });
+            const result = await res.json();
+            showToast(result.message || `Ran ${sc.name}`, '⚡');
+            syncState();
+          } catch (e) {
+            showToast(`Failed to run ${sc.name}`, '✕', true);
+          }
+        });
+
+        // Drag and Drop (Mouse / HTML5)
+        card.addEventListener('dragstart', (e) => {
+          if (!isEditingDeck) return;
+          draggedItemIndex = index;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+        });
+
+        card.addEventListener('dragover', (e) => {
+          if (!isEditingDeck) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        });
+
+        card.addEventListener('drop', (e) => {
+          if (!isEditingDeck) return;
+          e.preventDefault();
+          const targetIndex = index;
+          if (draggedItemIndex !== null && draggedItemIndex !== targetIndex) {
+            moveShortcut(draggedItemIndex, targetIndex);
+          }
+        });
+
+        shortcutsGrid.appendChild(card);
+      });
+
+      // Attach button events for edit controls
+      if (isEditingDeck) {
+        shortcutsGrid.querySelectorAll('.sc-move-left').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (idx > 0) moveShortcut(idx, idx - 1);
+          });
+        });
+
+        shortcutsGrid.querySelectorAll('.sc-move-right').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (idx < currentShortcuts.length - 1) moveShortcut(idx, idx + 1);
+          });
+        });
+
+        shortcutsGrid.querySelectorAll('.sc-edit-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const sid = btn.getAttribute('data-id');
+            openEditShortcutModal(sid);
+          });
+        });
+
+        shortcutsGrid.querySelectorAll('.sc-del-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const sid = btn.getAttribute('data-id');
+            deleteShortcutItem(sid);
+          });
+        });
+      }
+    }
+
+    // Reorder and Save
+    async function moveShortcut(fromIdx, toIdx) {
+      if (fromIdx < 0 || toIdx < 0 || fromIdx >= currentShortcuts.length || toIdx >= currentShortcuts.length) return;
+      const item = currentShortcuts.splice(fromIdx, 1)[0];
+      currentShortcuts.splice(toIdx, 0, item);
+      renderShortcuts(currentShortcuts);
+      haptic(25);
+
+      // Persist to localStorage and server
+      try {
+        localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(currentShortcuts));
+        await fetch('/api/shortcuts/reorder', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ order: currentShortcuts.map(s => s.id) })
+        });
+      } catch (e) {}
+    }
+
+    async function deleteShortcutItem(id) {
+      const sc = currentShortcuts.find(s => s.id === id);
+      const name = sc ? sc.name : 'Shortcut';
+      currentShortcuts = currentShortcuts.filter(s => s.id !== id);
+      renderShortcuts(currentShortcuts);
+      showToast(`Removed "${name}"`, '🗑️');
+      haptic(35);
+
+      try {
+        localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(currentShortcuts));
+        await fetch(`/api/shortcuts/${id}`, { method: 'DELETE' });
+      } catch (e) {}
+    }
+
+    // Toggle Deck Editing Mode
+    if (deckEditBtn) {
+      deckEditBtn.addEventListener('click', () => {
+        isEditingDeck = !isEditingDeck;
+        deckEditBtn.classList.toggle('active', isEditingDeck);
+        deckEditBtn.textContent = isEditingDeck ? '✓ Done Editing' : '✏️ Edit Deck';
+        renderShortcuts(currentShortcuts);
+      });
+    }
+
+    // -----------------------------------------------------------
+    // Suggestions & Custom Shortcut Modal
+    // -----------------------------------------------------------
+    let allSuggestions = [];
+
+    async function loadSuggestions() {
+      try {
+        const res = await fetch('/api/shortcuts/suggestions');
+        if (res.ok) {
+          allSuggestions = await res.json();
+          renderSuggestionsList(allSuggestions);
+        }
+      } catch (e) {}
+    }
+
+    function renderSuggestionsList(suggestions) {
+      if (!suggestionsList) return;
+      suggestionsList.innerHTML = '';
+      if (suggestionsCount) suggestionsCount.textContent = suggestions.length;
+
+      const currentIds = new Set(currentShortcuts.map(s => s.id));
+
+      suggestions.forEach(s => {
+        const isAdded = currentIds.has(s.id);
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.innerHTML = `
+          <div class="suggestion-left">
+            <div class="suggestion-icon" style="background: ${s.color || 'var(--accent-grad)'};">
+              ${getShortcutIconHtml(s.icon)}
+            </div>
+            <div class="suggestion-texts">
+              <div class="suggestion-name">${s.name}</div>
+              <div class="suggestion-desc">${s.desc || s.description || ''}</div>
+            </div>
+          </div>
+          <button class="suggestion-add-btn ${isAdded ? 'added' : ''}" data-id="${s.id}">
+            ${isAdded ? '✓ Added' : '+ Add'}
+          </button>
+        `;
+
+        const addBtn = item.querySelector('.suggestion-add-btn');
+        addBtn.addEventListener('click', async () => {
+          if (addBtn.classList.contains('added')) return;
+          haptic(35);
+          addBtn.classList.add('added');
+          addBtn.textContent = '✓ Added';
+
+          // Add to current shortcuts
+          currentShortcuts.push(s);
+          renderShortcuts(currentShortcuts);
+          showToast(`Added "${s.name}" to Home Screen!`, '⚡');
+
+          try {
+            localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(currentShortcuts));
+            await fetch('/api/shortcuts/save', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(s)
+            });
+          } catch (e) {}
+        });
+
+        suggestionsList.appendChild(item);
+      });
+    }
+
+    // Modal Tabs
+    function setModalTab(tab) {
+      if (tab === 'suggestions') {
+        tabSuggestionsBtn?.classList.add('active');
+        tabCustomBtn?.classList.remove('active');
+        if (tabSuggestionsView) tabSuggestionsView.style.display = 'block';
+        if (tabCustomView) tabCustomView.style.display = 'none';
+        loadSuggestions();
+      } else {
+        tabSuggestionsBtn?.classList.remove('active');
+        tabCustomBtn?.classList.add('active');
+        if (tabSuggestionsView) tabSuggestionsView.style.display = 'none';
+        if (tabCustomView) tabCustomView.style.display = 'block';
+      }
+    }
+
+    if (tabSuggestionsBtn) {
+      tabSuggestionsBtn.addEventListener('click', () => setModalTab('suggestions'));
+    }
+    if (tabCustomBtn) {
+      tabCustomBtn.addEventListener('click', () => setModalTab('custom'));
+    }
+
+    function openAddShortcutModal() {
+      const editId = document.getElementById('sc-edit-id');
+      const nameInput = document.getElementById('sc-name-input');
+      const modalTitle = document.getElementById('modal-shortcut-title');
+      if (editId) editId.value = '';
+      if (nameInput) nameInput.value = '';
+      if (modalTitle) modalTitle.textContent = '⚡ Actions & Shortcuts';
+      setModalTab('suggestions');
+      shortcutModal?.classList.add('open');
+    }
+
+    function openEditShortcutModal(id) {
+      const sc = currentShortcuts.find(s => s.id === id);
+      if (!sc) return;
+      const editId = document.getElementById('sc-edit-id');
+      const nameInput = document.getElementById('sc-name-input');
+      const iconInput = document.getElementById('sc-icon-input');
+      const modalTitle = document.getElementById('modal-shortcut-title');
+
+      if (editId) editId.value = sc.id;
+      if (nameInput) nameInput.value = sc.name;
+      if (iconInput) iconInput.value = sc.icon || '⚡';
+      if (modalTitle) modalTitle.textContent = `Edit "${sc.name}"`;
+
+      setModalTab('custom');
+      shortcutModal?.classList.add('open');
+    }
+
+    if (addShortcutBtn) {
+      addShortcutBtn.addEventListener('click', openAddShortcutModal);
+    }
+    if (scModalCloseX) {
+      scModalCloseX.addEventListener('click', () => shortcutModal?.classList.remove('open'));
+    }
+    if (scCancelBtn) {
+      scCancelBtn.addEventListener('click', () => shortcutModal?.classList.remove('open'));
+    }
+
+    if (scTypeSelect) {
+      scTypeSelect.addEventListener('change', () => {
+        const val = scTypeSelect.value;
+        if (scFieldStack) scFieldStack.style.display = val === 'stack_apps' ? 'block' : 'none';
+        if (scFieldHotkey) scFieldHotkey.style.display = val === 'hotkey' ? 'block' : 'none';
+        if (scFieldCommand) scFieldCommand.style.display = val === 'command' ? 'block' : 'none';
+      });
+    }
+
+    if (scSaveBtn) {
+      scSaveBtn.addEventListener('click', async () => {
+        const editId = document.getElementById('sc-edit-id')?.value.trim();
+        const nameInput = document.getElementById('sc-name-input');
+        const name = nameInput ? nameInput.value.trim() : '';
+        if (!name) {
+          alert('Please enter a shortcut name');
+          return;
+        }
+        const type = scTypeSelect ? scTypeSelect.value : 'command';
+        const iconInput = document.getElementById('sc-icon-input');
+        const icon = iconInput ? (iconInput.value.trim() || '⚡') : '⚡';
+
+        const payload = {
+          id: editId || undefined,
+          name: name,
+          icon: icon,
+          action_type: type,
+          description: name
+        };
+
+        if (type === 'stack_apps') {
+          const screenSelect = document.getElementById('sc-screen-select');
+          const screen = parseInt(screenSelect ? screenSelect.value : '2', 10);
+          const appsInput = document.getElementById('sc-apps-input');
+          const appsStr = appsInput ? appsInput.value : 'notepad.exe';
+          const apps = appsStr.split(',').map(s => s.trim()).filter(Boolean).map(a => ({
+            name: a.replace(/\.exe$/i, ''),
+            cmd: a,
+            match: a.replace(/\.exe$/i, '').toLowerCase()
+          }));
+          payload.target_screen = screen;
+          payload.layout = 'vertical';
+          payload.apps = apps;
+          payload.description = `Stack ${apps.length} apps vertically on Screen ${screen}`;
+        } else if (type === 'hotkey') {
+          const hkInput = document.getElementById('sc-hotkey-input');
+          const keys = (hkInput ? hkInput.value : '').split('+').map(k => k.trim().toLowerCase()).filter(Boolean);
+          payload.keys = keys;
+          payload.description = `Hotkey: ${keys.join(' + ')}`;
+        } else if (type === 'command') {
+          const cmdInput = document.getElementById('sc-cmd-input');
+          const cmd = cmdInput ? cmdInput.value.trim() : '';
+          payload.command = cmd;
+          payload.description = `Run: ${cmd}`;
+        }
+
+        try {
+          const res = await fetch('/api/shortcuts/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`Shortcut '${name}' saved!`, '⚡');
+            shortcutModal?.classList.remove('open');
+            loadShortcuts();
+          } else {
+            showToast('Error saving shortcut', '✕', true);
+          }
+        } catch (e) {
+          showToast('Error saving shortcut', '✕', true);
+        }
+      });
+    }
+
+    // -----------------------------------------------------------
+    // Mobile View Switcher (Apps / Shortcuts / Split)
+    // -----------------------------------------------------------
+    const dashboardViewport = document.getElementById('dashboard-viewport');
+    const viewAppsBtn = document.getElementById('view-apps-btn');
+    const viewShortcutsBtn = document.getElementById('view-shortcuts-btn');
+    const viewSplitBtn = document.getElementById('view-split-btn');
+
+    function setMobileView(view) {
+      if (!dashboardViewport) return;
+      dashboardViewport.setAttribute('data-active-view', view);
+      try {
+        localStorage.setItem(VIEW_KEY, view);
+      } catch (e) {}
+
+      viewAppsBtn?.classList.toggle('active', view === 'apps');
+      viewShortcutsBtn?.classList.toggle('active', view === 'shortcuts');
+      viewSplitBtn?.classList.toggle('active', view === 'split');
+    }
+
+    if (viewAppsBtn) viewAppsBtn.addEventListener('click', () => setMobileView('apps'));
+    if (viewShortcutsBtn) viewShortcutsBtn.addEventListener('click', () => setMobileView('shortcuts'));
+    if (viewSplitBtn) viewSplitBtn.addEventListener('click', () => setMobileView('split'));
+
+    // -----------------------------------------------------------
+    // Voice Assistant & NLP (Web Speech API)
+    // -----------------------------------------------------------
+    let recognition = null;
+    let isListening = false;
+    const voiceBtn = document.getElementById('voice-btn');
+    const voiceHud = document.getElementById('voice-hud');
+    const voiceText = document.getElementById('voice-text');
+    const voiceStopBtn = document.getElementById('voice-stop-btn');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    function initVoice() {
+      if (!SpeechRecognition) return;
+      try {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          isListening = true;
+          if (voiceBtn) voiceBtn.classList.add('active');
+          if (voiceHud) voiceHud.classList.add('active');
+          if (voiceText) voiceText.textContent = 'Listening... Speak your command';
+          haptic(40);
+        };
+
+        recognition.onresult = (event) => {
+          let interim = '';
+          let final = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+              final += event.results[i][0].transcript;
+            } else {
+              interim += event.results[i][0].transcript;
+            }
+          }
+          if (voiceText) voiceText.textContent = final || interim || 'Listening...';
+          if (final) processNlpCommand(final);
+        };
+
+        recognition.onerror = (event) => {
+          stopListening();
+          if (event.error === 'not-allowed') {
+            fallbackTextPrompt("Microphone access is restricted over HTTP. You can type your command below:");
+          }
+        };
+
+        recognition.onend = () => stopListening();
+      } catch (e) {}
+    }
+
+    function startListening() {
+      if (!SpeechRecognition) {
+        fallbackTextPrompt("Speech recognition isn't supported on this browser. Type your command below:");
+        return;
+      }
+      if (!recognition) initVoice();
+      try { recognition.start(); } catch (e) {}
+    }
+
+    function stopListening() {
+      isListening = false;
+      if (voiceBtn) voiceBtn.classList.remove('active');
+      if (voiceHud) voiceHud.classList.remove('active');
+      if (recognition) {
+        try { recognition.stop(); } catch (e) {}
+      }
+    }
+
+    function fallbackTextPrompt(hint) {
+      const text = prompt(hint || "Enter command for PC (e.g. 'start recording in OBS', 'mute discord', 'set volume to 50%'):");
+      if (text) processNlpCommand(text);
+    }
+
+    async function processNlpCommand(commandText) {
+      if (!commandText || !commandText.trim()) return;
+      stopListening();
+      showToast(`NLP: "${commandText}"`, '🤖');
+
+      try {
+        const res = await fetch('/api/nlp/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: commandText })
+        });
+        const result = await res.json();
+        haptic(45);
+
+        if (result.success) {
+          const toastIcon = result.action === 'create' ? '⚡' : (result.action === 'delete' ? '🗑️' : (result.action === 'edit' ? '✏️' : '✓'));
+          showToast(result.message || 'Action executed!', toastIcon);
+          if ('speechSynthesis' in window && result.speech) {
+            try {
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(result.speech);
+              utterance.rate = 1.05;
+              window.speechSynthesis.speak(utterance);
+            } catch (e) {}
+          }
+        } else {
+          showToast(result.message || 'Command not understood', '⚠️', true);
+        }
+
+        // Dynamically update shortcuts deck if created, edited, or deleted on the go
+        if (result.shortcuts && Array.isArray(result.shortcuts)) {
+          currentShortcuts = result.shortcuts;
+          try {
+            localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(currentShortcuts));
+          } catch (e) {}
+          renderShortcuts(currentShortcuts);
+        }
+
+        if (result.audio_state) {
+          renderFullState(result.audio_state);
+        } else {
+          syncState();
+        }
+      } catch (e) {
+        showToast('Failed to contact NLP Agent', '✕', true);
+      }
+    }
+
+    if (voiceBtn) {
+      voiceBtn.addEventListener('click', () => {
+        if (isListening) stopListening();
+        else startListening();
+      });
+    }
+
+    if (voiceStopBtn) {
+      voiceStopBtn.addEventListener('click', stopListening);
+    }
+
+    initVoice();
+
+    // -----------------------------------------------------------
+    // QR Code & Install Modals
+    // -----------------------------------------------------------
+    const qrModal = document.getElementById('qr-modal');
+    const qrOpenBtn = document.getElementById('qr-open-btn');
+    const qrCloseBtn = document.getElementById('qr-close-btn');
+    const modalUrl = document.getElementById('modal-url');
+    const qrcodeBox = document.getElementById('qrcode-box');
+
+    qrOpenBtn?.addEventListener('click', () => qrModal?.classList.add('open'));
+    qrCloseBtn?.addEventListener('click', () => qrModal?.classList.remove('open'));
+    qrModal?.addEventListener('click', (e) => {
+      if (e.target === qrModal) qrModal.classList.remove('open');
+    });
+
+    async function loadInfo() {
+      try {
+        const res = await fetch('/api/info');
+        const data = await res.json();
+        const phoneUrl = data.phone_url || window.location.href;
+        currentServerUrl = phoneUrl;
+        if (netLabel) netLabel.textContent = `Phone: ${phoneUrl}`;
+        if (modalUrl) modalUrl.textContent = phoneUrl;
+        if (installServerUrl) installServerUrl.textContent = phoneUrl;
+        new QRCode(qrcodeBox, phoneUrl);
+      } catch (e) {
+        currentServerUrl = window.location.origin;
+        if (netLabel) netLabel.textContent = `Local: ${window.location.host}`;
+        if (modalUrl) modalUrl.textContent = window.location.href;
+        if (installServerUrl) installServerUrl.textContent = window.location.origin;
+        new QRCode(qrcodeBox, window.location.href);
+      }
+    }
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        executeMuteToggle('master', 0);
+      } else if (e.code === 'ArrowRight' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        const nv = Math.min(100, currentMasterVolume + 5);
+        sendLiveVolume('master', 0, nv);
+      } else if (e.code === 'ArrowLeft' || e.code === 'ArrowDown') {
+        e.preventDefault();
+        const nv = Math.max(0, currentMasterVolume - 5);
+        sendLiveVolume('master', 0, nv);
+      }
+    });
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then((reg) => console.log('[PWA] ServiceWorker registered with scope:', reg.scope))
+          .catch((err) => console.warn('[PWA] ServiceWorker error:', err));
+      });
+    }
+
+    // PWA Install Prompt Handler & Modal
+    let deferredInstallPrompt = null;
+    let currentServerUrl = window.location.origin;
+    const installBtn = document.getElementById('install-btn');
+    const installModal = document.getElementById('install-modal');
+    const installCloseBtn = document.getElementById('install-close-btn');
+    const installServerUrl = document.getElementById('install-server-url');
+
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      if (installBtn) installBtn.style.display = 'none';
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (installBtn) installBtn.style.display = 'flex';
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          const choice = await deferredInstallPrompt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            installBtn.style.display = 'none';
+          }
+          deferredInstallPrompt = null;
+        } else {
+          if (installServerUrl) installServerUrl.textContent = currentServerUrl;
+          if (installModal) installModal.classList.add('open');
+        }
+      });
+    }
+
+    if (installCloseBtn && installModal) {
+      installCloseBtn.addEventListener('click', () => installModal.classList.remove('open'));
+      installModal.addEventListener('click', (e) => {
+        if (e.target === installModal) installModal.classList.remove('open');
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installBtn) installBtn.style.display = 'none';
+      if (installModal) installModal.classList.remove('open');
+      deferredInstallPrompt = null;
+    });
+
+    // -----------------------------------------------------------
+    // Immediate Cached State Restoration (Zero-Flash Persistent Boot)
+    // -----------------------------------------------------------
+    function restoreCachedState() {
+      try {
+        const cachedShortcuts = JSON.parse(localStorage.getItem(SHORTCUTS_KEY));
+        if (Array.isArray(cachedShortcuts) && cachedShortcuts.length > 0) {
+          currentShortcuts = cachedShortcuts;
+          renderShortcuts(currentShortcuts);
+        }
+
+        const cachedState = JSON.parse(localStorage.getItem(STATE_KEY));
+        if (cachedState) {
+          renderFullState(cachedState);
+        }
+
+        const cachedView = localStorage.getItem(VIEW_KEY) || 'apps';
+        setMobileView(cachedView);
+      } catch (e) {}
+    }
+
+    // -----------------------------------------------------------
+    // 5-Minute Silent Inactivity Sleep & Transparent Instant Wake-up
+    // -----------------------------------------------------------
+    const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (300,000 ms)
+    let lastActivityTimestamp = Date.now();
+    isSleeping = false;
+    let syncPollingTimer = null;
+
+    function startPolling() {
+      if (syncPollingTimer) clearInterval(syncPollingTimer);
+      syncPollingTimer = setInterval(syncState, 1000);
+    }
+
+    function stopPolling() {
+      if (syncPollingTimer) {
+        clearInterval(syncPollingTimer);
+        syncPollingTimer = null;
+      }
+    }
+
+    function enterSilentSleep() {
+      if (isSleeping) return;
+      isSleeping = true;
+      stopPolling();
+      if (isListening) stopListening();
+      // Keep UI steady, calm and frozen in its current state.
+      // Absolutely NO offline banners, toasts, or disconnection alerts.
+    }
+
+    function wakeUpSilently() {
+      lastActivityTimestamp = Date.now();
+      if (!isSleeping) return;
+      isSleeping = false;
+      // Silently restore polling and immediately refresh latest volume & app states
+      startPolling();
+      syncState();
+    }
+
+    function registerUserActivity() {
+      if (isSleeping) {
+        wakeUpSilently();
+      } else {
+        lastActivityTimestamp = Date.now();
+      }
+    }
+
+    // Passive listeners for all user interactions (touch, pointer, mouse, key, scroll)
+    const activityEvents = [
+      'touchstart', 'touchend', 'touchmove',
+      'pointerdown', 'pointerup', 'pointermove',
+      'mousedown', 'mouseup', 'mousemove', 'click',
+      'keydown', 'wheel', 'scroll'
+    ];
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, registerUserActivity, { passive: true, capture: true });
+    });
+
+    // Inactivity Watchdog: Checks every 5 seconds
+    setInterval(() => {
+      if (!isSleeping && (Date.now() - lastActivityTimestamp >= INACTIVITY_TIMEOUT_MS)) {
+        enterSilentSleep();
+      }
+    }, 5000);
+
+    // Startup Initialization
+    restoreCachedState();
+    loadInfo();
+    loadShortcuts();
+    syncState();
+    startPolling();
+  </script>
+</body>
+</html>
