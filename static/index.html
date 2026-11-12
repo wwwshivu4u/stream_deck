@@ -1113,70 +1113,6 @@
       font-size: 0.72rem;
     }
 
-    /* Discord Button & Modal */
-    .discord-btn {
-      position: relative;
-      border-color: rgba(88, 101, 242, 0.4);
-    }
-    .discord-btn:hover, .discord-btn.active {
-      border-color: #5865F2;
-      box-shadow: 0 0 14px rgba(88, 101, 242, 0.5);
-    }
-    .discord-online-dot {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 6px #22c55e;
-    }
-    .discord-action-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      width: 100%;
-      margin: 8px 0;
-    }
-    .discord-action-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      text-align: center;
-    }
-    .discord-action-card:hover {
-      border-color: #5865F2;
-      background: rgba(88, 101, 242, 0.15);
-      transform: translateY(-2px);
-    }
-    .discord-action-card:active {
-      transform: scale(0.96);
-    }
-    .discord-card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .discord-card-title {
-      font-size: 0.82rem;
-      font-weight: 700;
-    }
-    .discord-card-sub {
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      font-family: monospace;
-    }
 
     /* Action Feedback Toast */
     .action-toast {
@@ -1228,12 +1164,6 @@
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
           </svg>
-        </button>
-        <button class="icon-btn discord-btn" id="discord-btn" title="Discord Voice Controls" style="display: none;">
-          <svg viewBox="0 0 24 24" fill="#5865F2" width="18" height="18">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-          </svg>
-          <span class="discord-online-dot"></span>
         </button>
         <button class="icon-btn" id="install-btn" title="Install App to Home Screen">
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
@@ -1343,91 +1273,6 @@
     <span id="toast-msg">Action triggered</span>
   </div>
 
-  <!-- Discord Control Modal -->
-  <div class="modal-overlay" id="discord-modal">
-    <div class="modal-box" style="max-width: 420px; width: 95vw; text-align: left; padding: 18px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <svg viewBox="0 0 24 24" fill="#5865F2" width="24" height="24">
-            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
-          </svg>
-          <h2 style="font-size: 1.05rem;">Discord Voice Hub</h2>
-        </div>
-        <div id="discord-rpc-status-badge" style="font-size: 0.68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: #94a3b8; display: flex; align-items: center; gap: 5px;">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;"></span> Hotkey Fallback
-        </div>
-      </div>
-
-      <!-- Segmented Navigation (Controls / RPC Settings) -->
-      <div style="display: flex; background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); border-radius: 10px; padding: 3px; gap: 4px; margin-bottom: 12px;">
-        <button id="discord-tab-controls-btn" class="view-tab-btn active" style="flex: 1; border-radius: 8px;">Voice Controls</button>
-        <button id="discord-tab-setup-btn" class="view-tab-btn" style="flex: 1; border-radius: 8px;">Native RPC Setup</button>
-      </div>
-
-      <!-- Controls View -->
-      <div id="discord-view-controls">
-        <div class="discord-action-cards" style="margin-top: 0;">
-          <div class="discord-action-card" id="discord-mute-card">
-            <div class="discord-card-icon" id="discord-mute-icon-bg" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-              </svg>
-            </div>
-            <div class="discord-card-title" id="discord-mute-title">Microphone</div>
-            <div class="discord-card-sub" id="discord-mute-sub">Live</div>
-          </div>
-
-          <div class="discord-action-card" id="discord-deafen-card">
-            <div class="discord-card-icon" id="discord-deafen-icon-bg" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
-                <path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/>
-              </svg>
-            </div>
-            <div class="discord-card-title" id="discord-deafen-title">Deafen</div>
-            <div class="discord-card-sub" id="discord-deafen-sub">Active</div>
-          </div>
-        </div>
-
-        <div id="discord-mode-hint" style="width: 100%; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; margin-top: 6px;">
-          ⚡ <b>Hotkey Fallback Active</b>: Toggling sends simulated global keystrokes. Switch to <b>Native RPC Setup</b> to unlock real-time mute detection directly from Discord's local API.
-        </div>
-      </div>
-
-      <!-- Native RPC Setup View -->
-      <div id="discord-view-setup" style="display: none;">
-        <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
-          Connect to Discord Desktop's local RPC engine (port 6463) to read and change mute/deafen states with 0ms latency without simulated keystrokes.
-        </p>
-
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-          <div>
-            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Application Client ID</label>
-            <input type="text" id="discord-client-id-input" placeholder="e.g. 123456789012345678" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 7px 9px; border-radius: 8px; font-size: 0.8rem; font-family: monospace; outline: none;">
-          </div>
-          <div>
-            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 2px;">Application Client Secret</label>
-            <input type="password" id="discord-client-secret-input" placeholder="Paste Client Secret from Discord Developer Portal" style="width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); color: white; padding: 7px 9px; border-radius: 8px; font-size: 0.8rem; font-family: monospace; outline: none;">
-          </div>
-        </div>
-
-        <div style="background: rgba(88, 101, 242, 0.08); border: 1px solid rgba(88, 101, 242, 0.25); border-radius: 8px; padding: 8px; font-size: 0.7rem; color: #c7d2fe; line-height: 1.4; margin-bottom: 10px;">
-          <b>Quick Setup Guide (1 Minute):</b><br>
-          1. Go to <a href="https://discord.com/developers/applications" target="_blank" style="color: #60a5fa; text-decoration: underline;">discord.com/developers/applications</a> and click <b>New Application</b>.<br>
-          2. Under <b>OAuth2 &rarr; Redirects</b>, add <code>https://localhost/</code> and save.<br>
-          3. Copy <b>Client ID</b> and <b>Client Secret</b>, paste above, and tap <b>Link Discord Desktop</b> below!
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button id="discord-rpc-connect-btn" class="close-btn" style="flex: 1; height: 34px; background: #5865F2; font-size: 0.78rem;">🔗 Link Discord Desktop</button>
-          <button id="discord-rpc-disconnect-btn" class="close-btn" style="width: 90px; height: 34px; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); font-size: 0.78rem;">Unlink</button>
-        </div>
-      </div>
-
-      <button class="close-btn" id="discord-close-btn" style="margin-top: 10px; width: 100%;">Done</button>
-    </div>
-  </div>
-
   <!-- Add / Edit Shortcut Modal with Suggestions & Custom Builder -->
   <div class="modal-overlay" id="shortcut-modal">
     <div class="modal-box" style="max-width: 460px; width: 95vw; text-align: left; padding: 18px;">
@@ -1465,8 +1310,7 @@
               <option value="hotkey">Send Global Hotkey / Media Key</option>
               <option value="command">Run Windows Command / App</option>
               <option value="obs_record">Toggle OBS Studio Recording</option>
-              <option value="discord_mute">Toggle Discord Mute</option>
-              <option value="discord_deafen">Toggle Discord Deafen</option>
+              <option value="discord_deafen">Discord Deafen (Ctrl+F1)</option>
               <option value="lock_pc">Lock Windows PC</option>
               <option value="mute_master">Panic Mute Master Audio</option>
             </select>
@@ -1995,13 +1839,6 @@
         if (res.ok) {
           const st = await res.json();
           renderFullState(st);
-          const discordBtn = document.getElementById('discord-btn');
-          if (discordBtn && st.discord_running !== undefined) {
-            discordBtn.style.display = st.discord_running ? 'flex' : 'none';
-          }
-          if (discordModal && discordModal.classList.contains('open')) {
-            loadDiscordStatus();
-          }
         }
       } catch (e) {}
     }
@@ -2023,240 +1860,6 @@
       }, 3000);
     }
 
-    // -----------------------------------------------------------
-    // Discord Integration & Native Local RPC
-    // -----------------------------------------------------------
-    const discordBtn = document.getElementById('discord-btn');
-    const discordModal = document.getElementById('discord-modal');
-    const discordCloseBtn = document.getElementById('discord-close-btn');
-    const discordTabControlsBtn = document.getElementById('discord-tab-controls-btn');
-    const discordTabSetupBtn = document.getElementById('discord-tab-setup-btn');
-    const discordViewControls = document.getElementById('discord-view-controls');
-    const discordViewSetup = document.getElementById('discord-view-setup');
-    const discordRpcStatusBadge = document.getElementById('discord-rpc-status-badge');
-    const discordMuteCard = document.getElementById('discord-mute-card');
-    const discordDeafenCard = document.getElementById('discord-deafen-card');
-    const discordMuteIconBg = document.getElementById('discord-mute-icon-bg');
-    const discordDeafenIconBg = document.getElementById('discord-deafen-icon-bg');
-    const discordMuteTitle = document.getElementById('discord-mute-title');
-    const discordDeafenTitle = document.getElementById('discord-deafen-title');
-    const discordMuteSub = document.getElementById('discord-mute-sub');
-    const discordDeafenSub = document.getElementById('discord-deafen-sub');
-    const discordModeHint = document.getElementById('discord-mode-hint');
-    const discordClientIdInput = document.getElementById('discord-client-id-input');
-    const discordClientSecretInput = document.getElementById('discord-client-secret-input');
-    const discordRpcConnectBtn = document.getElementById('discord-rpc-connect-btn');
-    const discordRpcDisconnectBtn = document.getElementById('discord-rpc-disconnect-btn');
-
-    let currentDiscordStatus = null;
-
-    function setDiscordTab(tab) {
-      if (tab === 'setup') {
-        discordTabSetupBtn?.classList.add('active');
-        discordTabControlsBtn?.classList.remove('active');
-        if (discordViewSetup) discordViewSetup.style.display = 'block';
-        if (discordViewControls) discordViewControls.style.display = 'none';
-      } else {
-        discordTabControlsBtn?.classList.add('active');
-        discordTabSetupBtn?.classList.remove('active');
-        if (discordViewControls) discordViewControls.style.display = 'block';
-        if (discordViewSetup) discordViewSetup.style.display = 'none';
-      }
-    }
-
-    if (discordTabControlsBtn) discordTabControlsBtn.addEventListener('click', () => setDiscordTab('controls'));
-    if (discordTabSetupBtn) discordTabSetupBtn.addEventListener('click', () => setDiscordTab('setup'));
-
-    function updateDiscordUI(status) {
-      if (!status) return;
-      currentDiscordStatus = status;
-
-      // Update Header Badge
-      if (discordRpcStatusBadge) {
-        if (status.mode === 'rpc') {
-          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e;"></span> Native RPC Active';
-          discordRpcStatusBadge.style.color = '#86efac';
-          discordRpcStatusBadge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
-        } else if (status.rpc_available) {
-          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #60a5fa; box-shadow: 0 0 6px #60a5fa;"></span> RPC Ready (Setup)';
-          discordRpcStatusBadge.style.color = '#93c5fd';
-          discordRpcStatusBadge.style.borderColor = 'rgba(96, 165, 250, 0.4)';
-        } else {
-          discordRpcStatusBadge.innerHTML = '<span style="width: 7px; height: 7px; border-radius: 50%; background: #94a3b8;"></span> Hotkey Fallback';
-          discordRpcStatusBadge.style.color = '#94a3b8';
-          discordRpcStatusBadge.style.borderColor = 'var(--card-border)';
-        }
-      }
-
-      // Update Voice Tiles
-      const vs = status.voice_settings || {};
-      if (discordMuteIconBg && discordMuteTitle && discordMuteSub) {
-        if (vs.mute) {
-          discordMuteIconBg.style.background = 'rgba(239, 68, 68, 0.25)';
-          discordMuteIconBg.style.color = '#ef4444';
-          discordMuteTitle.textContent = 'Unmute Mic';
-          discordMuteSub.textContent = status.mode === 'rpc' ? 'Muted (RPC Native)' : 'Muted';
-        } else {
-          discordMuteIconBg.style.background = 'rgba(16, 185, 129, 0.25)';
-          discordMuteIconBg.style.color = '#10b981';
-          discordMuteTitle.textContent = 'Mute Mic';
-          discordMuteSub.textContent = status.mode === 'rpc' ? 'Live (RPC Native)' : 'Live';
-        }
-      }
-
-      if (discordDeafenIconBg && discordDeafenTitle && discordDeafenSub) {
-        if (vs.deaf) {
-          discordDeafenIconBg.style.background = 'rgba(168, 85, 247, 0.25)';
-          discordDeafenIconBg.style.color = '#c084fc';
-          discordDeafenTitle.textContent = 'Undeafen';
-          discordDeafenSub.textContent = status.mode === 'rpc' ? 'Deafened (RPC Native)' : 'Deafened';
-        } else {
-          discordDeafenIconBg.style.background = 'rgba(59, 130, 246, 0.25)';
-          discordDeafenIconBg.style.color = '#60a5fa';
-          discordDeafenTitle.textContent = 'Deafen';
-          discordDeafenSub.textContent = 'Audio Active';
-        }
-      }
-
-      // Mode Hint
-      if (discordModeHint) {
-        if (status.mode === 'rpc') {
-          discordModeHint.innerHTML = '✨ <b>Native Local RPC Active</b>: Directly communicates with your Discord Desktop client (port 6463) without simulated keystrokes. Real-time mute states are synchronized live.';
-        } else {
-          discordModeHint.innerHTML = '⚡ <b>Hotkey Fallback Active</b>: Toggling sends simulated global keystrokes. Switch to <b>Native RPC Setup</b> to unlock real-time mute detection directly from Discord\'s local API.';
-        }
-      }
-
-      // Input prefill
-      if (discordClientIdInput && status.client_id && !discordClientIdInput.value) {
-        discordClientIdInput.value = status.client_id;
-      }
-    }
-
-    async function loadDiscordStatus() {
-      try {
-        const res = await fetch('/api/discord/status');
-        if (!res.ok) return;
-        const status = await res.json();
-        updateDiscordUI(status);
-        if (discordBtn && status.running !== undefined) {
-          discordBtn.style.display = status.running ? 'flex' : 'none';
-        }
-      } catch (e) {}
-    }
-
-    if (discordBtn && discordModal) {
-      discordBtn.addEventListener('click', () => {
-        discordModal.classList.add('open');
-        setDiscordTab('controls');
-        loadDiscordStatus();
-      });
-    }
-
-    if (discordCloseBtn && discordModal) {
-      discordCloseBtn.addEventListener('click', () => discordModal.classList.remove('open'));
-      discordModal.addEventListener('click', (e) => {
-        if (e.target === discordModal) discordModal.classList.remove('open');
-      });
-    }
-
-    if (discordMuteCard) {
-      discordMuteCard.addEventListener('click', async () => {
-        haptic(35);
-        try {
-          const res = await fetch('/api/discord/mute', { method: 'POST' });
-          const data = await res.json();
-          if (data.settings) updateDiscordUI(data.settings);
-
-          if (data.settings && data.settings.mode === 'rpc') {
-            const isMuted = data.settings.voice_settings ? data.settings.voice_settings.mute : false;
-            showToast(isMuted ? 'Discord Microphone Muted' : 'Discord Microphone Live', isMuted ? '🔴' : '🎙️');
-          } else {
-            showToast('Discord Mute Toggled (Ctrl+Shift+M)', '🎙️');
-          }
-        } catch (e) {
-          showToast('Failed to toggle Discord mute', '✕', true);
-        }
-      });
-    }
-
-    if (discordDeafenCard) {
-      discordDeafenCard.addEventListener('click', async () => {
-        haptic(35);
-        try {
-          const res = await fetch('/api/discord/deafen', { method: 'POST' });
-          const data = await res.json();
-          if (data.settings) updateDiscordUI(data.settings);
-
-          if (data.settings && data.settings.mode === 'rpc') {
-            const isDeaf = data.settings.voice_settings ? data.settings.voice_settings.deaf : false;
-            showToast(isDeaf ? 'Discord Deafened' : 'Discord Undeafened', isDeaf ? '🎧' : '🔊');
-          } else {
-            showToast('Discord Deafen Toggled (Ctrl+Shift+D)', '🎧');
-          }
-        } catch (e) {
-          showToast('Failed to toggle Discord deafen', '✕', true);
-        }
-      });
-    }
-
-    // Discord RPC Link Button
-    if (discordRpcConnectBtn) {
-      discordRpcConnectBtn.addEventListener('click', async () => {
-        const clientId = (discordClientIdInput?.value || '').trim();
-        const clientSecret = (discordClientSecretInput?.value || '').trim();
-
-        if (!clientId || !clientSecret) {
-          showToast('Please enter both Client ID and Client Secret', '⚠️', true);
-          return;
-        }
-
-        haptic(40);
-        showToast('Connecting... Check Discord to Authorize!', '🔗');
-        discordRpcConnectBtn.textContent = '⏳ Authorizing in Discord...';
-        discordRpcConnectBtn.disabled = true;
-
-        try {
-          const res = await fetch('/api/discord/rpc/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ client_id: clientId, client_secret: clientSecret })
-          });
-          const data = await res.json();
-          discordRpcConnectBtn.textContent = '🔗 Link Discord Desktop';
-          discordRpcConnectBtn.disabled = false;
-
-          if (data.success) {
-            showToast(data.message || 'Linked with Discord Native RPC!', '✓');
-            setDiscordTab('controls');
-            if (data.status) updateDiscordUI(data.status);
-            else loadDiscordStatus();
-          } else {
-            showToast(data.error || 'Authorization failed or timed out', '✕', true);
-          }
-        } catch (e) {
-          discordRpcConnectBtn.textContent = '🔗 Link Discord Desktop';
-          discordRpcConnectBtn.disabled = false;
-          showToast('Connection error linking Discord RPC', '✕', true);
-        }
-      });
-    }
-
-    // Discord RPC Unlink Button
-    if (discordRpcDisconnectBtn) {
-      discordRpcDisconnectBtn.addEventListener('click', async () => {
-        haptic(35);
-        try {
-          const res = await fetch('/api/discord/rpc/disconnect', { method: 'POST' });
-          const data = await res.json();
-          showToast('Unlinked Discord RPC (Switched to Hotkeys)', '✓');
-          if (data.status) updateDiscordUI(data.status);
-          else loadDiscordStatus();
-        } catch (e) {
-          showToast('Failed to unlink Discord RPC', '✕', true);
-        }
-      });
-    }
 
     // -----------------------------------------------------------
     // Shortcuts Deck & Editable / Arrangeable Grid
@@ -2631,6 +2234,12 @@
           const keys = (hkInput ? hkInput.value : '').split('+').map(k => k.trim().toLowerCase()).filter(Boolean);
           payload.keys = keys;
           payload.description = `Hotkey: ${keys.join(' + ')}`;
+        } else if (type === 'discord_deafen') {
+          payload.type = 'hotkey';
+          payload.keys = ['ctrl', 'f1'];
+          payload.color = '#5865f2';
+          payload.icon = icon !== '⚡' ? icon : 'headphones';
+          payload.description = 'Toggle Discord Deafen / Undeafen (Ctrl+F1)';
         } else if (type === 'command') {
           const cmdInput = document.getElementById('sc-cmd-input');
           const cmd = cmdInput ? cmdInput.value.trim() : '';

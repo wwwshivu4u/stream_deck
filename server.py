@@ -13,7 +13,6 @@ from pydantic import BaseModel
 import uvicorn
 
 import audio_manager
-import discord_rpc
 import nlp_agent
 import shortcuts_manager
 import system_controller
@@ -59,16 +58,6 @@ class AppRequest(BaseModel):
 
 class NlpRequest(BaseModel):
     text: str
-
-
-class DiscordSettingsRequest(BaseModel):
-    mute_hotkey: Optional[List[str]] = None
-    deafen_hotkey: Optional[List[str]] = None
-
-
-class DiscordRpcConfigRequest(BaseModel):
-    client_id: str
-    client_secret: str
 
 
 class WindowStackRequest(BaseModel):
@@ -194,55 +183,8 @@ def get_info(request: Request):
 @app.get("/status")
 def get_status():
     state = audio_manager.get_audio_state()
-    state["discord_running"] = system_controller.is_discord_running()
     state["obs_running"] = system_controller.is_obs_running()
     return state
-
-
-# Discord Endpoints
-@app.get("/api/discord/status")
-def discord_status():
-    return system_controller.get_discord_settings()
-
-
-@app.post("/api/discord/mute")
-def discord_mute():
-    success = system_controller.toggle_discord_mute()
-    return {"success": success, "action": "toggle_mute", "settings": system_controller.get_discord_settings()}
-
-
-@app.post("/api/discord/deafen")
-def discord_deafen():
-    success = system_controller.toggle_discord_deafen()
-    return {"success": success, "action": "toggle_deafen", "settings": system_controller.get_discord_settings()}
-
-
-@app.post("/api/discord/settings")
-def discord_settings(req: DiscordSettingsRequest):
-    return system_controller.update_discord_settings(req.mute_hotkey, req.deafen_hotkey)
-
-
-@app.post("/api/discord/rpc/config")
-def discord_rpc_config(req: DiscordRpcConfigRequest):
-    cfg = discord_rpc.rpc_manager.load_config()
-    cfg["client_id"] = req.client_id.strip()
-    cfg["client_secret"] = req.client_secret.strip()
-    cfg["rpc_enabled"] = True
-    discord_rpc.rpc_manager.save_config(cfg)
-    auth_result = discord_rpc.rpc_manager.request_authorization()
-    auth_result["status"] = system_controller.get_discord_settings()
-    return auth_result
-
-
-@app.post("/api/discord/rpc/disconnect")
-def discord_rpc_disconnect():
-    cfg = discord_rpc.rpc_manager.load_config()
-    cfg["access_token"] = ""
-    cfg["refresh_token"] = ""
-    cfg["rpc_enabled"] = False
-    discord_rpc.rpc_manager.save_config(cfg)
-    discord_rpc.rpc_manager.disconnect()
-    return {"success": True, "status": system_controller.get_discord_settings()}
 
 
 # Shortcuts & Macros Endpoints

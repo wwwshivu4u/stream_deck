@@ -46,6 +46,15 @@ SUGGESTED_SHORTCUTS = [
         }
     },
     {
+        "id": "discord_deafen",
+        "name": "Discord Deafen",
+        "desc": "Toggle Discord Deafen / Undeafen (Ctrl+F1)",
+        "icon": "headphones",
+        "color": "#5865f2",
+        "type": "hotkey",
+        "payload": {"keys": ["ctrl", "f1"]}
+    },
+    {
         "id": "obs_record",
         "name": "OBS Record",
         "desc": "Starts or stops recording in OBS Studio",
@@ -53,24 +62,6 @@ SUGGESTED_SHORTCUTS = [
         "color": "#ef4444",
         "type": "obs_record",
         "payload": {}
-    },
-    {
-        "id": "discord_mute",
-        "name": "Discord Mute",
-        "desc": "Toggles microphone mute in Discord (Ctrl+Shift+M)",
-        "icon": "mic_off",
-        "color": "#5865f2",
-        "type": "hotkey",
-        "payload": {"keys": ["ctrl", "shift", "m"]}
-    },
-    {
-        "id": "discord_deafen",
-        "name": "Discord Deafen",
-        "desc": "Toggles deafen in Discord (Ctrl+Shift+D)",
-        "icon": "headphones",
-        "color": "#8b5cf6",
-        "type": "hotkey",
-        "payload": {"keys": ["ctrl", "shift", "d"]}
     },
     {
         "id": "media_play_pause",
@@ -278,28 +269,20 @@ def run_shortcut(shortcut_id: str) -> Dict[str, Any]:
             "message": res.get("message", "Triggered OBS recording")
         }
 
-    elif stype == "discord_mute":
-        res = system_controller.toggle_discord_mute()
-        return {
-            "success": res,
-            "shortcut": s["name"],
-            "message": "Toggled Discord microphone mute"
-        }
-
-    elif stype == "discord_deafen":
-        res = system_controller.toggle_discord_deafen()
-        return {
-            "success": res,
-            "shortcut": s["name"],
-            "message": "Toggled Discord deafen"
-        }
-
     elif stype == "lock_pc":
         success = system_controller.lock_workstation()
         return {
             "success": success,
             "shortcut": s["name"],
             "message": "Locked Windows PC"
+        }
+
+    elif stype == "discord_deafen":
+        system_controller.send_hotkey(["ctrl", "f1"])
+        return {
+            "success": True,
+            "shortcut": s["name"],
+            "message": "Toggled Discord Deafen (Ctrl+F1)"
         }
 
     elif stype == "mute_master":

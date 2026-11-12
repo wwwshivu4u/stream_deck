@@ -112,4 +112,3 @@ def set_app_mute(pid: int, muted: Optional[bool] = None) -> Dict[str, Any]:
             if s.get("pid") == pid:
                 s["muted"] = res["muted"]
     return res
-

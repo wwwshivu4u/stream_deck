@@ -1,31 +1,15 @@
 [
   {
-    "id": "discord_mute",
-    "name": "Discord Mute",
-    "desc": "Toggles microphone mute in Discord (Ctrl+Shift+M)",
-    "icon": "mic_off",
+    "id": "discord_deafen",
+    "name": "Discord Deafen",
+    "desc": "Toggle Discord Deafen / Undeafen (Ctrl+F1)",
+    "icon": "headphones",
     "color": "#5865f2",
     "type": "hotkey",
     "payload": {
       "keys": [
         "ctrl",
-        "shift",
-        "m"
-      ]
-    }
-  },
-  {
-    "id": "discord_deafen",
-    "name": "Discord Deafen",
-    "desc": "Toggles deafen in Discord (Ctrl+Shift+D)",
-    "icon": "headphones",
-    "color": "#8b5cf6",
-    "type": "hotkey",
-    "payload": {
-      "keys": [
-        "ctrl",
-        "shift",
-        "d"
+        "f1"
       ]
     }
   },
@@ -37,6 +21,21 @@
     "color": "#ef4444",
     "type": "obs_record",
     "payload": {}
+  },
+  {
+    "id": "take_screenshot",
+    "name": "Snipping Tool",
+    "desc": "Trigger Windows Snip & Sketch (Win+Shift+S)",
+    "icon": "camera",
+    "color": "#a855f7",
+    "type": "hotkey",
+    "payload": {
+      "keys": [
+        "win",
+        "shift",
+        "s"
+      ]
+    }
   },
   {
     "id": "media_play_pause",
@@ -79,17 +78,6 @@
     }
   },
   {
-    "id": "launch_steam",
-    "name": "Open Steam",
-    "desc": "Launches Steam gaming client",
-    "icon": "gamepad",
-    "color": "#00adee",
-    "type": "command",
-    "payload": {
-      "cmd": "steam.exe"
-    }
-  },
-  {
     "id": "launch_spotify",
     "name": "Open Spotify",
     "desc": "Launches Spotify music player",
@@ -101,47 +89,14 @@
     }
   },
   {
-    "id": "take_screenshot",
-    "name": "Snipping Tool",
-    "desc": "Trigger Windows Snip & Sketch (Win+Shift+S)",
-    "icon": "camera",
-    "color": "#a855f7",
-    "type": "hotkey",
+    "id": "launch_steam",
+    "name": "Open Steam",
+    "desc": "Launches Steam gaming client",
+    "icon": "gamepad",
+    "color": "#00adee",
+    "type": "command",
     "payload": {
-      "keys": [
-        "win",
-        "shift",
-        "s"
-      ]
+      "cmd": "steam.exe"
     }
-  },
-  {
-    "name": "Stack 3 Apps (Screen 2)",
-    "desc": "Tiles 3 apps vertically on Screen 2",
-    "icon": "layout_vertical",
-    "color": "#3b82f6",
-    "type": "window_layout",
-    "payload": {
-      "monitor": 2,
-      "layout": "vertical",
-      "apps": [
-        {
-          "name": "Notepad",
-          "cmd": "notepad.exe",
-          "match": "notepad"
-        },
-        {
-          "name": "Calculator",
-          "cmd": "calc.exe",
-          "match": "calculator"
-        },
-        {
-          "name": "Calculator",
-          "cmd": "calc.exe",
-          "match": "calc"
-        }
-      ]
-    },
-    "id": "act_stack_3_apps_screen_2_515902"
   }
 ]

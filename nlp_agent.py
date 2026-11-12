@@ -52,7 +52,7 @@ def query_local_llm_for_action(raw_text: str) -> Optional[Dict[str, Any]]:
         "- \"desc\": short description (e.g. \"Launches Blender 3D\", \"Tiles windows\")\n"
         "- \"icon\": one of [cube, globe, music, gamepad, code, terminal, layout_vertical, layout_horizontal, camera, lock, volume_off, mic_off, headphones, record, play_pause, desktop, cpu, folder, edit, sparkles, star]\n"
         "- \"color\": vibrant hex color (e.g. #3b82f6, #10b981, #8b5cf6, #ef4444, #f59e0b, #06b6d4, #ec4899)\n"
-        "- \"type\": one of [command, window_layout, hotkey, obs_record, discord_mute, discord_deafen, lock_pc, mute_master]\n"
+        "- \"type\": one of [command, window_layout, hotkey, obs_record, discord_deafen, lock_pc, mute_master]\n"
         "- \"payload\": dict with parameters (e.g. {\"cmd\": \"...\"} for command; {\"keys\": [\"win\",\"d\"]} for hotkey; {\"monitor\": 2, \"layout\": \"vertical\", \"apps\": [...]} for window_layout)\n\n"
         "Return ONLY a single valid JSON object. Do not wrap in markdown quotes or explanations."
     )
@@ -151,28 +151,7 @@ def synthesize_action_from_voice(raw_text: str, query: str) -> Dict[str, Any]:
             "payload": {}
         }
 
-    # 4. Discord Controls
-    if "discord" in query or "deafen" in query:
-        if "deafen" in query:
-            return {
-                "name": custom_name or "Discord Deafen",
-                "desc": "Toggles deafen in Discord (Ctrl+Shift+D)",
-                "icon": "headphones",
-                "color": "#8b5cf6",
-                "type": "hotkey",
-                "payload": {"keys": ["ctrl", "shift", "d"]}
-            }
-        else:
-            return {
-                "name": custom_name or "Discord Mute",
-                "desc": "Toggles mic mute in Discord (Ctrl+Shift+M)",
-                "icon": "mic_off",
-                "color": "#5865f2",
-                "type": "hotkey",
-                "payload": {"keys": ["ctrl", "shift", "m"]}
-            }
-
-    # 5. Lock PC
+    # 4. Lock PC
     if "lock" in query and any(w in query for w in ["pc", "computer", "workstation", "screen", "windows"]):
         return {
             "name": custom_name or "Lock Windows PC",
@@ -557,52 +536,7 @@ def execute_nlp_command(raw_text: str) -> Dict[str, Any]:
             }
 
     # -------------------------------------------------------------
-    # 2. Discord Mute & Deafen Controls
-    # -------------------------------------------------------------
-    if "discord" in query or "deafen" in query:
-        if "deafen" in query:
-            system_controller.toggle_discord_deafen()
-            settings = system_controller.get_discord_settings()
-            mode = settings.get("mode", "hotkey")
-            is_deaf = settings.get("voice_settings", {}).get("deaf")
-            if mode == "rpc" and is_deaf is not None:
-                state_str = "deafened" if is_deaf else "undeafened"
-                msg = f"Discord is now natively {state_str}"
-                speech = f"Discord {state_str}."
-            else:
-                msg = "Toggled Discord deafen"
-                speech = "Toggled Discord deafen."
-            return {
-                "success": True,
-                "intent": "discord_deafen",
-                "action": "toggle_deafen",
-                "message": msg,
-                "speech": speech,
-                "data": settings
-            }
-        elif any(w in query for w in ["mute", "unmute", "mic"]):
-            system_controller.toggle_discord_mute()
-            settings = system_controller.get_discord_settings()
-            mode = settings.get("mode", "hotkey")
-            is_muted = settings.get("voice_settings", {}).get("mute")
-            if mode == "rpc" and is_muted is not None:
-                state_str = "muted" if is_muted else "unmuted"
-                msg = f"Discord microphone is now natively {state_str}"
-                speech = f"Discord microphone {state_str}."
-            else:
-                msg = "Toggled Discord microphone mute"
-                speech = "Toggled Discord microphone mute."
-            return {
-                "success": True,
-                "intent": "discord_mute",
-                "action": "toggle_mute",
-                "message": msg,
-                "speech": speech,
-                "data": settings
-            }
-
-    # -------------------------------------------------------------
-    # 3. Window Layout & Stacking (e.g. 3 Apps on Screen 2)
+    # 2. Window Layout & Stacking (e.g. 3 Apps on Screen 2)
     # -------------------------------------------------------------
     if "stack" in query or "tile" in query or ("screen 2" in query and "open" in query) or "2nd screen" in query:
         # Check if target is Screen 2
@@ -683,6 +617,18 @@ def execute_nlp_command(raw_text: str) -> Dict[str, Any]:
                     "data": {"volume": vol}
                 }
 
+    # 4. Discord Deafen controls (Ctrl + F1)
+    if "deafen" in query or "undeafen" in query:
+        system_controller.send_hotkey(["ctrl", "f1"])
+        return {
+            "success": True,
+            "intent": "discord_deafen",
+            "action": "deafen",
+            "message": "Toggled Discord Deafen (Ctrl+F1)",
+            "speech": "Toggled Discord deafen.",
+            "data": {"hotkey": "Ctrl+F1"}
+        }
+
     # Mute / Unmute controls
     if "mute" in query or "unmute" in query:
         should_mute = "unmute" not in query
@@ -708,6 +654,21 @@ def execute_nlp_command(raw_text: str) -> Dict[str, Any]:
                 "data": {"app": name, "muted": should_mute}
             }
         else:
+            # Check if user targeted a specific app that isn't running or playing audio
+            stop_words = {"mute", "unmute", "please", "can", "you", "the", "my", "to", "on", "off"}
+            master_synonyms = {"master", "pc", "all", "everything", "system", "volume", "sound", "computer", "audio", "speaker", "speakers"}
+            query_tokens = [w for w in re.sub(r'[^a-zA-Z0-9\s]', ' ', query).split() if w not in stop_words]
+            if query_tokens and not any(t in master_synonyms for t in query_tokens):
+                target_name = " ".join(query_tokens).title()
+                return {
+                    "success": False,
+                    "intent": "app_mute",
+                    "action": "not_found",
+                    "message": f"No active audio session found for '{target_name}'. Open the app or start playback first.",
+                    "speech": f"No active audio session found for {target_name}.",
+                    "data": {"query": query}
+                }
+
             audio_manager.set_master_mute(should_mute)
             action_word = "Muted" if should_mute else "Unmuted"
             return {

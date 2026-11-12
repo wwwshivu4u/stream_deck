@@ -289,16 +289,6 @@ def launch_and_stack_apps(
     }
 
 
-# -------------------------------------------------------------
-# Discord Control
-# -------------------------------------------------------------
-
-DISCORD_SETTINGS = {
-    "mute_hotkey": ["ctrl", "shift", "m"],
-    "deafen_hotkey": ["ctrl", "shift", "d"]
-}
-
-
 psapi = ctypes.windll.psapi
 
 
@@ -325,67 +315,7 @@ def is_process_running_native(target_name: str) -> bool:
                         return True
             finally:
                 kernel32.CloseHandle(hProcess)
-    return False
-
-
-def is_discord_running() -> bool:
-    """Checks if Discord is active either via Audio Sessions or native process scan."""
-    try:
-        import audio_manager
-        state = audio_manager.get_audio_state()
-        for s in state.get("sessions", []):
-            name = s.get("name", "").lower()
-            dname = s.get("displayName", "").lower()
-            if "discord" in name or "discord" in dname:
-                return True
-    except Exception:
-        pass
-
-    return is_process_running_native("discord.exe")
-
-
-def toggle_discord_mute(custom_keys: Optional[List[str]] = None) -> bool:
-    try:
-        import discord_rpc
-        rpc_res = discord_rpc.rpc_manager.toggle_mute()
-        if rpc_res.get("success"):
-            return True
-    except Exception:
-        pass
-    keys = custom_keys or DISCORD_SETTINGS["mute_hotkey"]
-    return send_hotkey(keys)
-
-
-def toggle_discord_deafen(custom_keys: Optional[List[str]] = None) -> bool:
-    try:
-        import discord_rpc
-        rpc_res = discord_rpc.rpc_manager.toggle_deafen()
-        if rpc_res.get("success"):
-            return True
-    except Exception:
-        pass
-    keys = custom_keys or DISCORD_SETTINGS["deafen_hotkey"]
-    return send_hotkey(keys)
-
-
-def get_discord_settings() -> Dict[str, Any]:
-    try:
-        import discord_rpc
-        status = discord_rpc.rpc_manager.get_status()
-    except Exception:
-        status = {"running": is_discord_running(), "mode": "hotkey", "voice_settings": {}}
-
-    status["mute_hotkey"] = DISCORD_SETTINGS["mute_hotkey"]
-    status["deafen_hotkey"] = DISCORD_SETTINGS["deafen_hotkey"]
-    return status
-
-
-def update_discord_settings(mute_keys: Optional[List[str]] = None, deafen_keys: Optional[List[str]] = None):
-    if mute_keys:
-        DISCORD_SETTINGS["mute_hotkey"] = mute_keys
-    if deafen_keys:
-        DISCORD_SETTINGS["deafen_hotkey"] = deafen_keys
-    return get_discord_settings()
+            return False
 
 
 # -------------------------------------------------------------
@@ -395,6 +325,12 @@ def update_discord_settings(mute_keys: Optional[List[str]] = None, deafen_keys: 
 OBS_SETTINGS = {
     "record_hotkey": ["ctrl", "f9"]
 }
+
+
+def is_app_running(app_name: str) -> bool:
+    """Checks if an application is running by name (e.g. discord, obs, chrome)."""
+    clean = app_name.lower().replace(".exe", "")
+    return is_process_running_native(clean) or is_process_running_native(f"{clean}.exe")
 
 
 def is_obs_running() -> bool:
