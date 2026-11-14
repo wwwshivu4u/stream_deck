@@ -15,6 +15,78 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="Volume">
   <style>
+    /* ===========================================================
+       Touch-Friendly Tactile Controls & Elimination of Sticky Hover
+       =========================================================== */
+    * {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+
+    button, .icon-btn, .cockpit-pill-btn, .standby-pill-btn, .tool-btn, 
+    .port-chip, .notes-filter-tab, .notes-action-btn, .deck-action-btn, 
+    .add-shortcut-btn, .shortcut-card, .port-meta-card, .app-launch-card, 
+    .island-btn, .island-chip, .view-tab-btn, .port-kill-action-btn,
+    .ports-filter-pill, .suggestion-item, .suggestion-add-btn {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Universal Instant Tactile Active State for Touch & Clicks */
+    button:active, 
+    .icon-btn:active, 
+    .cockpit-pill-btn:active, 
+    .standby-pill-btn:active, 
+    .tool-btn:active, 
+    .telem-pill.clickable:active,
+    .port-chip:active, 
+    .notes-filter-tab:active, 
+    .notes-action-btn:active, 
+    .deck-action-btn:active, 
+    .add-shortcut-btn:active, 
+    .shortcut-card:active, 
+    .port-kill-action-btn:active, 
+    .app-launch-card:active, 
+    .island-btn:active, 
+    .island-chip:active, 
+    .view-tab-btn:active,
+    .ports-filter-pill:active {
+      transform: scale(0.96) !important;
+      filter: brightness(1.18);
+      opacity: 0.9;
+      transition: transform 0.05s ease, filter 0.05s ease;
+    }
+
+    /* Dedicated Touch Device Resets (Smartphones & Tablets) */
+    @media (hover: none) or (pointer: coarse) {
+      /* Strictly suppress sticky transforms or sticky box-shadows on touch release */
+      *:hover {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      .pet-habitat,
+      .cockpit-pill-btn,
+      .standby-pill-btn,
+      .telem-pill.clickable,
+      .tool-btn,
+      .port-chip,
+      .notes-filter-tab,
+      .notes-action-btn,
+      .deck-action-btn,
+      .add-shortcut-btn,
+      .shortcut-card,
+      .port-meta-card,
+      .port-kill-action-btn,
+      .island-btn,
+      .launcher-tab,
+      .app-launch-card,
+      .island-chip {
+        transform: none !important;
+      }
+    }
+
+
     :root {
       --bg: #090d16;
       --card-bg: rgba(20, 27, 44, 0.75);
@@ -67,40 +139,10 @@
       max-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 10px 14px;
+      padding: 10px 14px 72px 14px;
       gap: 10px;
       box-sizing: border-box;
       overflow: hidden;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 2px 4px;
-      flex-shrink: 0;
-      gap: 8px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .brand span.net-info {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      margin-top: 1px;
-      font-family: monospace;
     }
 
     /* Mobile Segmented View Switcher (Only visible on narrow mobile < 768px) */
@@ -111,6 +153,8 @@
       border-radius: 999px;
       padding: 3px;
       gap: 2px;
+      align-self: center;
+      margin-bottom: 2px;
     }
 
     .view-tab-btn {
@@ -131,10 +175,1035 @@
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
     }
 
-    .header-btns {
+    /* Cockpit Bar (Top Control & Companion Hub) */
+    .cockpit-bar {
       display: flex;
-      gap: 6px;
       align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+      padding: 2px 0;
+      width: 100%;
+    }
+
+    /* Pixel Pet Habitat & Stage */
+    .pet-habitat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 3px 8px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .pet-habitat:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(167, 139, 250, 0.35);
+      transform: translateY(-1px);
+    }
+    }
+
+    .pet-stage {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pixel-pet-wrap {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: petBounce 2.5s infinite ease-in-out;
+      image-rendering: pixelated;
+    }
+
+    .pixel-pet-svg {
+      shape-rendering: crispEdges;
+      overflow: visible;
+    }
+
+    @keyframes petBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    .p-eye {
+      transform-origin: center;
+      animation: petBlink 4s infinite;
+    }
+
+    @keyframes petBlink {
+      0%, 94%, 98%, 100% { transform: scaleY(1); }
+      96% { transform: scaleY(0.1); }
+    }
+
+    .pet-hearts {
+      position: absolute;
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .heart-particle {
+      position: absolute;
+      font-size: 0.75rem;
+      animation: heartFloat 1s forwards ease-out;
+      pointer-events: none;
+    }
+
+    @keyframes heartFloat {
+      0% { opacity: 1; transform: translate(-50%, 0) scale(0.6); }
+      100% { opacity: 0; transform: translate(-50%, -24px) scale(1.3); }
+    }
+
+    .pet-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pet-header-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pet-name {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #e2e8f0;
+      letter-spacing: -0.01em;
+    }
+
+    .pet-badge {
+      font-size: 0.6rem;
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+      color: white;
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .pet-xp-track {
+      width: 44px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .pet-xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #a855f7);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+
+
+    /* Cockpit Pill Buttons & Companion Badge */
+    .pet-mini-avatar {
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: petMiniPulse 3s infinite ease-in-out;
+    }
+    @keyframes petMiniPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+
+    .cockpit-pill-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      color: var(--text);
+      padding: 4px 12px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      user-select: none;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .cockpit-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(167, 139, 250, 0.35);
+      transform: translateY(-1px);
+    }
+    }
+    .cockpit-pill-btn:active {
+      transform: scale(0.96);
+    }
+
+
+
+    .standby-pill-btn {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(56, 189, 248, 0.18) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #e0f2fe;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .standby-pill-btn:hover {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(56, 189, 248, 0.3) 100%);
+      border-color: rgba(56, 189, 248, 0.7);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+    }
+    }
+
+    /* Telemetry Pill in Cockpit Bar */
+    .cockpit-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .telem-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 4px 9px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #cbd5e1;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .telem-pill.clickable {
+      cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .telem-pill.clickable:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-1px);
+    }
+    }
+    .telem-pill.clickable:active {
+      transform: scale(0.97);
+    }
+
+    .telem-divider {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 5px 9px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.18);
+      transform: translateY(-1px);
+    }
+    }
+    .tool-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Dynamic Island Pomodoro Button */
+    .island-pomo-btn {
+      position: relative;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-pomo-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+    }
+    .island-pomo-btn.running {
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.12);
+    }
+    .pomo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #94a3b8;
+      display: inline-block;
+      transition: all 0.2s ease;
+    }
+    .island-pomo-btn.running .pomo-dot {
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pomoPulse 1.2s infinite ease-in-out;
+    }
+    @keyframes pomoPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.4); }
+    }
+
+        /* Dynamic Roaming Pixel Pet (Byte) */
+    .roaming-pet {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 990;
+      width: 44px;
+      height: 44px;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+      transition: transform 2.2s cubic-bezier(0.25, 1, 0.5, 1);
+      pointer-events: auto;
+      filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65));
+    }
+    .roaming-pet.is-dragging {
+      cursor: grabbing;
+      transition: none !important;
+    }
+    .roaming-pet.is-dragging .pixel-pet-wrap {
+      transform: scale(1.18) rotate(6deg);
+    }
+
+    /* Idle Animation */
+    .roaming-pet.is-idle .pixel-pet-wrap {
+      animation: petIdleBounce 2.5s infinite ease-in-out;
+    }
+    @keyframes petIdleBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* Directional Walking Animations */
+    .roaming-pet.is-walking-right .pixel-pet-wrap {
+      animation: petWalkRight 0.28s infinite alternate ease-in-out;
+    }
+    @keyframes petWalkRight {
+      0% { transform: scaleX(1) translateY(0) rotate(2deg); }
+      100% { transform: scaleX(1) translateY(-6px) rotate(8deg); }
+    }
+
+    .roaming-pet.is-walking-left .pixel-pet-wrap {
+      animation: petWalkLeft 0.28s infinite alternate ease-in-out;
+    }
+    @keyframes petWalkLeft {
+      0% { transform: scaleX(-1) translateY(0) rotate(-2deg); }
+      100% { transform: scaleX(-1) translateY(-6px) rotate(-8deg); }
+    }
+
+    /* Sleeping Animation */
+    .roaming-pet.is-sleeping .pixel-pet-wrap {
+      animation: petSleepBreathing 2.4s infinite ease-in-out;
+    }
+    @keyframes petSleepBreathing {
+      0%, 100% { transform: scale(1, 1); }
+      50% { transform: scale(1.06, 0.86); }
+    }
+
+    /* Happy Bounce Animation */
+    .roaming-pet.is-happy .pixel-pet-wrap {
+      animation: petHopAnim 0.5s ease-out;
+    }
+    @keyframes petHopAnim {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-16px) scale(1.12); }
+      70% { transform: translateY(-3px); }
+    }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    .pet-zzz {
+      position: absolute;
+      top: -14px;
+      right: -8px;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .zzz-letter {
+      color: #93c5fd;
+      font-weight: 800;
+      font-family: monospace;
+      animation: zzzFloat 2s infinite ease-out;
+      opacity: 0;
+    }
+    .zzz-letter.z1 { font-size: 0.65rem; animation-delay: 0s; }
+    .zzz-letter.z2 { font-size: 0.78rem; animation-delay: 0.6s; }
+    .zzz-letter.z3 { font-size: 0.92rem; animation-delay: 1.2s; }
+    @keyframes zzzFloat {
+      0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+      40% { opacity: 0.9; }
+      100% { opacity: 0; transform: translate(12px, -20px) scale(1.2); }
+    }
+
+    .pet-ball {
+      position: absolute;
+      right: -20px;
+      bottom: 2px;
+      font-size: 0.85rem;
+      animation: ballBounce 0.6s infinite alternate ease-in-out;
+    }
+    @keyframes ballBounce {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-10px) rotate(180deg); }
+    }
+
+    /* Granular Telemetry Modal Styles */
+    .telem-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .telem-detail-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .td-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .td-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #f8fafc;
+      margin: 2px 0;
+    }
+    .td-sub {
+      font-size: 0.64rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .port-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      color: #93c5fd;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: monospace;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .port-chip:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: #3b82f6;
+    }
+    }
+    .active-port-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .active-port-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Granular Brain Dump Modal Styles */
+    .notes-filter-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .notes-filter-tab:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    }
+    .notes-filter-tab.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #e9d5ff;
+    }
+    .notes-action-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: #cbd5e1;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .notes-action-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+    }
+    }
+
+    /* Standby HUD Fullscreen Overlay - Zero-Scroll Dim-Lit OLED Screen (Strict dvh Viewport) */
+    .standby-hud {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      width: 100dvw;
+      max-width: 100dvw;
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden !important; /* Strictly no vertical or horizontal scroll */
+      touch-action: none; /* Disables all gesture scrolling on touchscreens */
+      overscroll-behavior: none;
+      z-index: 5000;
+      background: #000000;
+      filter: brightness(0.70) contrast(1.05); /* Dim-lit OLED battery saver aesthetic */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.2dvh 1.8dvw !important;
+      color: #e2e8f0;
+      animation: standbyFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-sizing: border-box !important;
+      cursor: pointer; /* Clicking or touching anywhere deactivates standby */
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes standbyFadeIn {
+      from { opacity: 0; transform: scale(0.985); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Standby Wake Guard Lock: prevents ghost clicks / double clicks on home screen buttons immediately after wake */
+    body.standby-wake-locked,
+    body.standby-wake-locked * {
+      pointer-events: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    /* OLED Burn-In Prevention Drift Wrapper */
+    .standby-drift-wrap {
+      width: 100%;
+      height: 100% !important;
+      max-height: 100% !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.8dvh !important;
+      flex: 1;
+      overflow: hidden !important;
+      min-height: 0 !important;
+      box-sizing: border-box;
+      transition: transform 1.2s ease-in-out;
+      pointer-events: none; /* Non-interactive: all clicks bubble directly to HUD */
+    }
+
+    /* Top Status Bar (Non-clickable informative strip) */
+    .standby-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 4dvh !important;
+      max-height: 4dvh !important;
+      min-height: 0 !important;
+      margin-bottom: 0 !important;
+      gap: 10px;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .standby-status-pills {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+    }
+    .standby-status-pill {
+      font-size: min(1.4dvh, 0.72rem);
+      font-weight: 700;
+      padding: 0.3dvh 0.8dvw;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .standby-status-pill.accent {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.08);
+    }
+    .standby-status-pill.power-ac {
+      color: #34d399;
+      border-color: rgba(52, 211, 153, 0.3);
+      background: rgba(52, 211, 153, 0.08);
+    }
+    .standby-wake-pill {
+      font-size: min(1.3dvh, 0.70rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.3dvh 0.8dvw;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Hero Section: Giant Clock & Master Volume Display */
+    .standby-hero-row {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1dvw;
+      height: 27dvh !important;
+      max-height: 27dvh !important;
+      min-height: 0 !important;
+      margin-bottom: 0 !important;
+      box-sizing: border-box;
+    }
+    .standby-clock-card {
+      background: rgba(8, 14, 25, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 1dvh 1.4dvw !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box;
+    }
+    .standby-card-sublabel {
+      font-size: min(1.2dvh, 0.66rem);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      margin-bottom: 0.2dvh;
+    }
+    .standby-clock-display {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      line-height: 1;
+    }
+    .standby-clock-big {
+      font-size: min(7.5dvh, 4.2rem) !important;
+      font-weight: 900;
+      font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+      letter-spacing: -0.04em;
+      color: #f8fafc;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+      line-height: 1;
+    }
+    .standby-colon {
+      animation: colonPulse 2s infinite ease-in-out;
+      color: #38bdf8;
+      margin: 0 2px;
+    }
+    @keyframes colonPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .standby-time-stacked {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-left: 6px;
+      align-self: center;
+    }
+    .standby-sec-badge {
+      font-size: min(2.0dvh, 1.05rem);
+      font-weight: 800;
+      font-family: ui-monospace, Consolas, monospace;
+      color: #38bdf8;
+      letter-spacing: 0.02em;
+    }
+    .standby-ampm-badge {
+      font-size: min(1.3dvh, 0.72rem);
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.08em;
+    }
+    .standby-date-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 0.4dvh;
+      font-size: min(1.5dvh, 0.82rem);
+      font-weight: 600;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .standby-date-pill {
+      font-size: min(1.1dvh, 0.62rem);
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 6px;
+      border-radius: 999px;
+      color: #cbd5e1;
+    }
+
+    /* Master Volume Card (Readout Only, No Buttons) */
+    .standby-volume-card {
+      background: rgba(8, 14, 25, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 1dvh 1.4dvw !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box;
+    }
+    .standby-vol-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .standby-vol-title {
+      font-size: min(1.3dvh, 0.70rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .standby-vol-status-badge {
+      font-size: min(1.2dvh, 0.65rem);
+      font-weight: 800;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      letter-spacing: 0.05em;
+    }
+    .standby-vol-status-badge.muted {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+    .standby-vol-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 0.2dvh 0;
+    }
+    .standby-big-vol {
+      font-size: min(6.5dvh, 3.4rem) !important;
+      font-weight: 900;
+      font-family: ui-monospace, Consolas, monospace;
+      color: #f8fafc;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .standby-big-vol .vol-unit {
+      font-size: min(2.5dvh, 1.2rem);
+      color: #38bdf8;
+      font-weight: 700;
+      margin-left: 2px;
+    }
+    .standby-vol-track {
+      width: 100%;
+      height: min(0.8dvh, 6px);
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.2dvh;
+    }
+    .standby-vol-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+      border-radius: 999px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+    .standby-audio-meta {
+      font-size: min(1.2dvh, 0.68rem);
+      color: #64748b;
+      margin-top: 0.3dvh;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+
+    /* Hardware Vitals Grid (4 Big Number Metric Cards) */
+    .standby-vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8dvw;
+      height: 26dvh !important;
+      max-height: 26dvh !important;
+      min-height: 0 !important;
+      margin-bottom: 0 !important;
+      box-sizing: border-box;
+    }
+    .standby-vital-card {
+      background: rgba(8, 14, 25, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 0.8dvh 1dvw !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      height: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box;
+    }
+    .standby-vital-title {
+      font-size: min(1.3dvh, 0.68rem);
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .standby-vital-tag {
+      font-size: min(1.1dvh, 0.62rem);
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      font-family: ui-monospace, Consolas, monospace;
+    }
+    .standby-big-metric {
+      font-size: min(4.2dvh, 1.85rem) !important;
+      font-weight: 900;
+      font-family: ui-monospace, Consolas, monospace;
+      color: #f1f5f9;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin: 0.2dvh 0;
+    }
+    .standby-big-metric .metric-unit {
+      font-size: min(2dvh, 0.95rem);
+      color: #38bdf8;
+      font-weight: 700;
+      margin-left: 2px;
+    }
+    .standby-metric-sub {
+      font-size: min(1.2dvh, 0.65rem);
+      color: #64748b;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.2dvh;
+    }
+    .standby-vital-bar-track {
+      width: 100%;
+      height: min(0.6dvh, 4px);
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: auto;
+    }
+    .standby-vital-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s ease;
+    }
+
+    /* Bottom Deck: Power/Uptime, Sparkline & Sleeping Byte */
+    .standby-bottom-deck {
+      display: grid;
+      grid-template-columns: 1.25fr 1.3fr 0.85fr;
+      gap: 0.8dvw;
+      height: 28dvh !important;
+      max-height: 28dvh !important;
+      min-height: 0 !important;
+      margin-bottom: 0 !important;
+      box-sizing: border-box;
+    }
+    .standby-deck-card {
+      background: rgba(8, 14, 25, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 0.8dvh 1dvw !important;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden !important;
+      height: 100% !important;
+      max-height: 100% !important;
+      box-sizing: border-box;
+    }
+    .standby-deck-label {
+      font-size: min(1.3dvh, 0.68rem);
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.2dvh;
+    }
+    .standby-power-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: min(1.3dvh, 0.68rem);
+      color: #94a3b8;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 0.2dvh;
+    }
+    .standby-power-val {
+      font-family: ui-monospace, Consolas, monospace;
+      font-weight: 700;
+      color: #f1f5f9;
+      font-size: min(1.3dvh, 0.68rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65%;
+      text-align: right;
+    }
+    .standby-spark-legend {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: min(1.2dvh, 0.66rem);
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .sparkline-mini-wrap {
+      width: 100%;
+      height: min(10dvh, 42px) !important;
+      overflow: hidden;
+      margin-top: 0.2dvh;
+    }
+    .sparkline-mini-wrap svg {
+      width: 100%;
+      height: 100%;
+    }
+    .nest-cushion-mini {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 100%;
+    }
+    .sleeping-byte-wrap {
+      position: relative;
+    }
+    .nest-pet-avatar {
+      font-size: min(4.2dvh, 1.8rem);
+      filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.35));
+      animation: petSleepBreathing 2.8s infinite ease-in-out;
+    }
+    .nest-zzz {
+      position: absolute;
+      top: -8px;
+      right: -6px;
+      font-size: min(1.3dvh, 0.68rem);
+      font-weight: 800;
+      color: #93c5fd;
+      font-family: ui-monospace, Consolas, monospace;
+      animation: zzzFloat 2s infinite ease-out;
+    }
+    .nest-meta {
+      display: flex;
+      flex-direction: column;
+    }
+    .nest-name {
+      font-size: min(1.4dvh, 0.76rem);
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .nest-hint {
+      font-size: min(1.2dvh, 0.64rem);
+      color: #64748b;
+      margin-top: 0.2dvh;
+      font-weight: 600;
+    }
+
+    .standby-footer-hint {
+      text-align: center;
+      font-size: min(1.3dvh, 0.68rem);
+      color: #475569;
+      height: 3dvh !important;
+      max-height: 3dvh !important;
+      min-height: 0 !important;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0 !important;
+      padding: 0 !important;
+    }
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
     }
 
     .icon-btn {
@@ -419,10 +1488,11 @@
       cursor: pointer;
       transition: all 0.15s ease;
     }
-
-    .deck-action-btn:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .deck-action-btn:hover {
       background: rgba(255, 255, 255, 0.12);
       border-color: rgba(255, 255, 255, 0.2);
+    }
     }
 
     .deck-action-btn.active {
@@ -436,10 +1506,11 @@
       color: #93c5fd;
       border-color: rgba(59, 130, 246, 0.4);
     }
-
-    .add-shortcut-btn:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .add-shortcut-btn:hover {
       background: var(--accent);
       color: white;
+    }
     }
 
     .panel-scroll-wrap {
@@ -465,8 +1536,10 @@
       border-radius: 999px;
     }
     .panel-scroll-wrap::-webkit-scrollbar-thumb:hover,
-    .suggestions-scroll::-webkit-scrollbar-thumb:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .suggestions-scroll::-webkit-scrollbar-thumb:hover {
       background: rgba(59, 130, 246, 0.5);
+    }
     }
 
     /* Applications Grid */
@@ -610,11 +1683,12 @@
       user-select: none;
       min-height: 54px;
     }
-
-    .shortcut-card:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .shortcut-card:hover {
       border-color: rgba(255, 255, 255, 0.25);
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
     }
 
     .shortcut-card:active {
@@ -703,24 +1777,96 @@
       font-size: 0.72rem;
       transition: background 0.1s;
     }
-
-    .sc-ctrl-btn:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .sc-ctrl-btn:hover {
       background: rgba(255, 255, 255, 0.2);
     }
-
-    .sc-ctrl-btn.sc-del-btn:hover {
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .sc-ctrl-btn.sc-del-btn:hover {
       background: rgba(239, 68, 68, 0.4);
       color: #fca5a5;
+    }
     }
 
     /* Mobile Responsive Viewport Rules (< 768px) */
     @media (max-width: 767px) {
       .container {
-        padding: 8px 10px;
-        gap: 8px;
+        padding: 8px 10px 72px 10px;
+        gap: 6px;
+      }
+      .cockpit-bar {
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .pet-bubble {
+        display: none;
+      }
+      .cockpit-pill-btn {
+        padding: 3px 7px;
+        font-size: 0.7rem;
+      }
+      .pill-label {
+        display: none;
+      }
+      .standby-hud {
+        padding: 1dvh 2dvw !important;
+        overflow: hidden !important;
+      }
+      .standby-hero-row {
+        grid-template-columns: 1.15fr 1fr;
+        gap: 6px;
+        height: 25dvh !important;
+        max-height: 25dvh !important;
+        margin-bottom: 0 !important;
+      }
+      .standby-vitals-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+        height: 33dvh !important;
+        max-height: 33dvh !important;
+        margin-bottom: 0 !important;
+      }
+      .standby-bottom-deck {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        height: 26dvh !important;
+        max-height: 26dvh !important;
+        margin-bottom: 0 !important;
+      }
+      .standby-bottom-deck .standby-byte-summary {
+        display: none !important;
+      }
+      .standby-clock-big {
+        font-size: min(6.5dvh, 2.2rem) !important;
+      }
+      .standby-big-vol {
+        font-size: min(6.0dvh, 2.0rem) !important;
+      }
+      .cockpit-tools {
+        margin-left: auto;
+      }
+      .tool-btn {
+        padding: 4px 6px;
+        font-size: 0.68rem;
       }
       .mobile-view-tabs {
         display: flex !important;
+      }
+      .dynamic-island {
+        min-width: 290px;
+        height: 46px;
+        padding: 3px 5px;
+      }
+      .island-btn {
+        padding: 0 8px;
+        font-size: 0.72rem;
+        gap: 4px;
+      }
+      .dynamic-island.expanded {
+        min-width: 310px;
+        max-width: 95vw;
+        height: 52px;
       }
       .dashboard-viewport {
         display: flex;
@@ -746,6 +1892,422 @@
         height: 50%;
         flex: 1;
       }
+    }
+
+    /* Compact Height Display Adaptation (Strict dvh Clamping on Short Screens) */
+    @media (max-height: 680px) {
+      .standby-hud {
+        padding: 0.8dvh 1.4dvw !important;
+      }
+      .standby-drift-wrap {
+        gap: 0.5dvh !important;
+      }
+      .standby-header {
+        height: 3.8dvh !important;
+      }
+      .standby-hero-row {
+        height: 26dvh !important;
+      }
+      .standby-vitals-grid {
+        height: 26dvh !important;
+      }
+      .standby-bottom-deck {
+        height: 27dvh !important;
+      }
+      .standby-clock-big {
+        font-size: min(7dvh, 2.2rem) !important;
+      }
+      .standby-big-vol {
+        font-size: min(6dvh, 2.0rem) !important;
+      }
+      .standby-big-metric {
+        font-size: min(4dvh, 1.35rem) !important;
+      }
+      .sparkline-mini-wrap {
+        height: min(8dvh, 28px) !important;
+      }
+    }
+
+    /* Main HUD Ports Pill Button & Ports Management Modal */
+    .ports-pill-btn {
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #38bdf8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .ports-pill-btn:hover {
+      background: rgba(14, 165, 233, 0.22);
+      border-color: rgba(56, 189, 248, 0.6);
+      transform: translateY(-1px);
+    }
+    }
+    .ports-pill-btn:active {
+      transform: scale(0.96);
+    }
+    .ports-badge {
+      background: #0284c7;
+      color: white;
+      font-size: 0.65rem;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-weight: 800;
+    }
+    /* Enhanced Ports Menu & Security Audit Cockpit */
+    .ports-triage-summary-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .ports-triage-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.15s ease;
+    }
+    .ports-triage-item.sec-suspicious {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+    .ports-triage-item.sec-exposed {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      color: #fde047;
+    }
+    .ports-triage-item.sec-safe {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+    .ports-triage-item.sec-system {
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      color: #cbd5e1;
+    }
+    .triage-icon {
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .triage-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Ports Filter Bar */
+    .ports-filter-bar {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .ports-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .ports-filter-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
+      transition: all 0.15s ease;
+    }
+    .ports-filter-pill.active {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #93c5fd;
+    }
+    .ports-filter-pill.sec-suspicious.active {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+    .ports-filter-pill.sec-exposed.active {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: #f59e0b;
+      color: #fde047;
+    }
+    .ports-filter-pill.sec-safe.active {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #10b981;
+      color: #6ee7b7;
+    }
+    .ports-filter-pill.sec-system.active {
+      background: rgba(148, 163, 184, 0.2);
+      border-color: #94a3b8;
+      color: #f1f5f9;
+    }
+
+    /* Port Card Detailed Layout */
+    .ports-grid-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 48vh;
+      padding-right: 4px;
+    }
+    .port-meta-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .port-meta-card.sec-suspicious {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.5);
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.15);
+    }
+    .port-meta-card.sec-exposed {
+      background: rgba(245, 158, 11, 0.07);
+      border-color: rgba(245, 158, 11, 0.45);
+    }
+    .port-meta-card.sec-safe {
+      background: rgba(16, 185, 129, 0.04);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .port-meta-card.sec-system {
+      background: rgba(255, 255, 255, 0.025);
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .port-card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .port-card-ident {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+    .port-num-badge {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 4px 8px;
+      border-radius: 8px;
+      min-width: 62px;
+      text-align: center;
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+    }
+    .port-num-badge.sec-suspicious {
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    .port-num-badge.sec-exposed {
+      color: #fde047;
+      background: rgba(245, 158, 11, 0.2);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
+    .port-num-badge.sec-safe {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+    .port-num-badge.sec-system {
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.12);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .port-info-block {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+    .port-proc-name {
+      font-size: 0.84rem;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .port-service-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .port-sec-badge {
+      font-size: 0.62rem;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .port-sec-badge.sec-suspicious {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fecaca;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+    .port-sec-badge.sec-exposed {
+      background: rgba(245, 158, 11, 0.22);
+      color: #fef08a;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+    .port-sec-badge.sec-safe {
+      background: rgba(16, 185, 129, 0.18);
+      color: #a7f3d0;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .port-sec-badge.sec-system {
+      background: rgba(148, 163, 184, 0.15);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .port-meta-sub {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      font-family: ui-monospace, Consolas, monospace;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .port-meta-sub code {
+      color: #f1f5f9;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    .port-scope-tag {
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.64rem;
+    }
+    .port-scope-tag.scope-lan {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fde047;
+    }
+    .port-scope-tag.scope-local {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+    }
+
+    /* Security Reason Callout Banner */
+    .port-sec-reason-box {
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      line-height: 1.35;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .port-sec-reason-box.sec-suspicious {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fecaca;
+      border-left: 3px solid #ef4444;
+    }
+    .port-sec-reason-box.sec-exposed {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fef3c7;
+      border-left: 3px solid #f59e0b;
+    }
+    .port-sec-reason-box.sec-safe {
+      background: rgba(16, 185, 129, 0.08);
+      color: #a7f3d0;
+      border-left: 3px solid #10b981;
+    }
+    .port-sec-reason-box.sec-system {
+      background: rgba(255, 255, 255, 0.04);
+      color: #94a3b8;
+      border-left: 3px solid #64748b;
+    }
+
+    .port-path-text {
+      font-size: 0.64rem;
+      color: #64748b;
+      font-family: ui-monospace, Consolas, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .port-card-action {
+      flex-shrink: 0;
+    }
+    .port-kill-action-btn {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+    .port-kill-action-btn.is-suspicious {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: #ef4444;
+      color: #ffffff;
+      font-weight: 800;
+    }
+    .port-system-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #64748b;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* Floating Horizontal Slider HUD Pill */
@@ -830,7 +2392,7 @@
       align-items: center;
       justify-content: center;
       padding: 16px;
-      z-index: 3000;
+      z-index: 4500;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s ease;
@@ -912,9 +2474,10 @@
       gap: 10px;
       transition: background 0.12s ease;
     }
-
-    .suggestion-item:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .suggestion-item:hover {
       background: rgba(255, 255, 255, 0.08);
+    }
     }
 
     .suggestion-left {
@@ -971,10 +2534,11 @@
       flex-shrink: 0;
       transition: all 0.15s ease;
     }
-
-    .suggestion-add-btn:hover {
+    @media (hover: hover) and (pointer: fine) {
+      .suggestion-add-btn:hover {
       background: var(--accent);
       color: white;
+    }
     }
 
     .suggestion-add-btn.added {
@@ -1029,97 +2593,525 @@
       line-height: 1.5;
     }
 
-    /* Voice Assistant Button & HUD */
-    .voice-btn {
-      position: relative;
-    }
-    .voice-btn.active {
-      background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%) !important;
-      border-color: #f87171 !important;
-      color: white !important;
-      animation: pulseMic 1.4s infinite alternate;
-      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6) !important;
-    }
-    @keyframes pulseMic {
-      0% { transform: scale(1); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
-      100% { transform: scale(1.08); box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
-    }
-    .voice-hud {
+    /* Dynamic Island (Bottom-Center Intelligent Control Island) */
+    .dynamic-island-wrap {
       position: fixed;
-      top: 16px;
+      bottom: 20px;
       left: 50%;
-      transform: translateX(-50%) translateY(-40px);
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(239, 68, 68, 0.6);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.35);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 8px 18px;
-      border-radius: 999px;
-      z-index: 3000;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      opacity: 0;
+      transform: translateX(-50%);
+      z-index: 3500;
       pointer-events: none;
-      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      max-width: 90vw;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .voice-hud.active {
-      opacity: 1;
+
+    .dynamic-island {
       pointer-events: auto;
-      transform: translateX(-50%) translateY(0);
-    }
-    .voice-waves {
+      background: rgba(13, 17, 28, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75),
+                  0 0 0 1px rgba(255, 255, 255, 0.05),
+                  0 0 25px rgba(59, 130, 246, 0.2);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      height: 48px;
+      min-width: 320px;
       display: flex;
       align-items: center;
-      gap: 3px;
-      height: 16px;
+      justify-content: center;
+      padding: 4px 8px;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+      position: relative;
+      overflow: hidden;
     }
-    .voice-wave-bar {
-      width: 3px;
-      height: 5px;
-      background: #ef4444;
+    @media (hover: hover) and (pointer: fine) {
+      .dynamic-island:hover {
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.85),
+                  0 0 35px rgba(139, 92, 246, 0.3);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    }
+
+    .island-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      height: 100%;
+      gap: 6px;
+    }
+
+    .island-btn {
+      pointer-events: auto;
+      touch-action: manipulation;
+      flex: 1;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      outline: none;
       border-radius: 999px;
-      animation: wave 0.8s infinite ease-in-out;
-    }
-    .voice-wave-bar:nth-child(2) { animation-delay: 0.15s; }
-    .voice-wave-bar:nth-child(3) { animation-delay: 0.3s; }
-    .voice-wave-bar:nth-child(4) { animation-delay: 0.45s; }
-    @keyframes wave {
-      0%, 100% { height: 4px; }
-      50% { height: 16px; }
-    }
-    .voice-text {
-      font-size: 0.85rem;
       color: var(--text);
-      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 10px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+    }
+
+    .island-btn:active {
+      transform: scale(0.96);
+    }
+
+    .island-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Global Physical Microphone Button */
+    .island-mic-btn {
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    .island-mic-btn.is-muted {
+      background: rgba(239, 68, 68, 0.22) !important;
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.45) !important;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4) !important;
+      animation: pulseMute 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseMute {
+      0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+    }
+
+    /* AI Assistant Button */
+    .island-ai-btn {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(139, 92, 246, 0.35) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.45);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.3);
+      color: #f8fafc;
+      flex: 1.15;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-ai-btn:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.38) 0%, rgba(139, 92, 246, 0.52) 100%);
+      box-shadow: 0 0 24px rgba(139, 92, 246, 0.55);
+      border-color: rgba(168, 85, 247, 0.7);
+    }
+    }
+
+    .ai-glow-orb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #c084fc;
+      animation: orbPulse 2.2s infinite ease-in-out;
+    }
+
+    @keyframes orbPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px #a855f7); }
+      50% { transform: scale(1.18); filter: drop-shadow(0 0 8px #c084fc); }
+    }
+
+    /* Discord Deafen Button */
+    .island-deafen-btn {
+      color: #818cf8;
+      background: rgba(88, 101, 242, 0.12);
+      border-color: rgba(88, 101, 242, 0.3);
+    }
+
+    .island-deafen-btn.is-deafened {
+      background: rgba(239, 68, 68, 0.22) !important;
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.45) !important;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4) !important;
+    }
+
+        /* Windows App Launcher Styles */
+    .island-launcher-btn {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-launcher-btn:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #bae6fd;
+    }
+    }
+
+    .launcher-cat-tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      scrollbar-width: none;
+    }
+    .launcher-cat-tabs::-webkit-scrollbar {
+      display: none;
+    }
+    .launcher-tab {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .launcher-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f8fafc;
+    }
+    }
+    .launcher-tab.active {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.45);
+      color: #93c5fd;
+    }
+
+    .app-launch-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .app-launch-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(59, 130, 246, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+    }
+    .app-launch-card:active {
+      transform: scale(0.96);
+    }
+    .app-card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+    .app-card-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.2;
+      max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 240px;
+      white-space: nowrap;
+      margin-bottom: 2px;
     }
-    .voice-stop-btn {
-      background: rgba(255, 255, 255, 0.15);
+    .app-card-cat {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+    }
+    .app-card-launch-badge {
+      margin-top: 6px;
+      font-size: 0.62rem;
+      font-weight: 800;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 1px 7px;
+      border-radius: 999px;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .app-launch-card:hover .app-card-launch-badge {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+    }
+
+    /* Dynamic Island Expanded State */
+    .dynamic-island.expanded {
+      min-width: 340px;
+      max-width: 94vw;
+      width: 440px;
+      height: auto;
+      min-height: 56px;
+      border-radius: 24px;
+      padding: 10px 14px;
+      background: rgba(10, 14, 26, 0.97);
+      border-color: rgba(168, 85, 247, 0.6);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.88),
+                  0 0 35px rgba(139, 92, 246, 0.5);
+    }
+
+    .island-expanded {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .island-expanded-top {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 10px;
+    }
+
+    .island-input-row {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 6px;
+    }
+
+    .island-cmd-input {
+      flex: 1;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 999px;
+      color: #f8fafc;
+      padding: 0 14px;
+      font-size: 0.82rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .island-cmd-input:focus {
+      border-color: #a855f7;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+    }
+
+    .island-cmd-submit {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       border: none;
       color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 0.72rem;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+    .island-cmd-submit:active {
+      transform: scale(0.92);
     }
 
+    .island-mic-toggle-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-mic-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(1.05);
+    }
+    }
+    .island-mic-toggle-btn.listening {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #f87171;
+      animation: pomoPulse 1.2s infinite ease-in-out;
+    }
+
+    .island-quick-chips {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      width: 100%;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .island-quick-chips::-webkit-scrollbar {
+      display: none;
+    }
+    .island-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      color: #cbd5e1;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-chip:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(168, 85, 247, 0.4);
+      color: #f8fafc;
+    }
+    }
+
+    .island-mic-notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 0.72rem;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 8px;
+      padding: 5px 10px;
+      gap: 6px;
+    }
+
+    .island-notice-btn {
+      background: rgba(245, 158, 11, 0.25);
+      border: 1px solid #f59e0b;
+      color: #fef3c7;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-notice-btn:hover {
+      background: rgba(245, 158, 11, 0.4);
+    }
+    }
+
+    .island-wave-box {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .island-wave-bar {
+      width: 3px;
+      height: 6px;
+      background: linear-gradient(180deg, #38bdf8 0%, #a855f7 100%);
+      border-radius: 999px;
+      animation: islandWave 0.8s infinite ease-in-out;
+    }
+
+    .island-wave-bar:nth-child(2) { animation-delay: 0.14s; height: 12px; }
+    .island-wave-bar:nth-child(3) { animation-delay: 0.28s; height: 18px; }
+    .island-wave-bar:nth-child(4) { animation-delay: 0.42s; height: 13px; }
+    .island-wave-bar:nth-child(5) { animation-delay: 0.56s; height: 7px; }
+
+    @keyframes islandWave {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1.35); }
+    }
+
+    .island-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .island-status-tag {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.65rem;
+      color: #c084fc;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .island-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 6px #34d399;
+    }
+
+    .island-transcript {
+      font-size: 0.84rem;
+      color: #f1f5f9;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .island-cancel-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .island-cancel-btn:hover {
+      background: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+    }
 
     /* Action Feedback Toast */
     .action-toast {
       position: fixed;
-      bottom: 20px;
+      bottom: 84px;
       left: 50%;
-      transform: translateX(-50%) translateY(40px);
+      transform: translateX(-50%) translateY(20px);
       background: rgba(16, 185, 129, 0.95);
       color: white;
       font-weight: 700;
@@ -1145,36 +3137,55 @@
 <body>
 
   <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="brand">
-        <h1>🔊 Volume Mixer</h1>
-        <span class="net-info" id="net-label">Connecting...</span>
+    <!-- Cockpit Top Bar: Companion Status + Live Hardware Telemetry + Standby HUD -->
+    <header class="cockpit-bar" id="cockpit-bar">
+      <!-- Left: Interactive Pixel Pet Mini Habitat / Status -->
+      <div class="pet-habitat" id="pet-habitat" title="Byte Companion">
+        <div class="pet-stage">
+          <div class="pet-mini-avatar">🐾</div>
+          <div class="pet-meta">
+            <div class="pet-header-row">
+              <span class="pet-name">Byte</span>
+              <span class="pet-badge" id="pet-level-badge">Lv. 1</span>
+            </div>
+            <div class="pet-xp-track" title="Focus XP Progress">
+              <div class="pet-xp-fill" id="pet-xp-fill" style="width: 25%;"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Mobile Segmented View Switcher (Visible on mobile screens < 768px) -->
-      <div class="mobile-view-tabs" id="mobile-view-tabs">
-        <button class="view-tab-btn active" data-view="apps" id="view-apps-btn">🎵 Apps</button>
-        <button class="view-tab-btn" data-view="shortcuts" id="view-shortcuts-btn">⚡ Deck</button>
-        <button class="view-tab-btn" data-view="split" id="view-split-btn">Split</button>
-      </div>
+      <!-- Right: Live System Telemetry Summary + Ports Menu + Standby HUD Button -->
+      <div class="cockpit-tools" id="cockpit-tools">
+        <!-- Live Vitals Pill Outside (Click to open Granular Telemetry Modal) -->
+        <div class="telem-pill clickable" id="open-telem-btn" title="Click for Granular Telemetry & Hardware Diagnostics">
+          <span class="telem-item"><b style="color:#60a5fa;">CPU</b> <span id="telem-cpu-stat">--%</span></span>
+          <span class="telem-divider"></span>
+          <span class="telem-item"><b style="color:#34d399;">GPU</b> <span id="telem-gpu-stat">--%</span></span>
+          <span class="telem-divider"></span>
+          <span class="telem-item"><b style="color:#c084fc;">RAM</b> <span id="telem-ram-stat">--%</span></span>
+          <span class="telem-divider"></span>
+          <span class="telem-item"><b style="color:#f59e0b;">📶</b> <span id="telem-ping-stat">--ms</span></span>
+        </div>
 
-      <div class="header-btns">
-        <button class="icon-btn voice-btn" id="voice-btn" title="Voice Assistant (NLP)">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-          </svg>
+        <!-- Main HUD Ports Menu Button -->
+        <button class="tool-btn ports-pill-btn" id="open-ports-btn" title="Active Listening Ports & Process Socket Manager">
+          <span>🔌</span> <span>Ports</span> <span class="ports-badge" id="cockpit-ports-badge">0</span>
         </button>
-        <button class="icon-btn" id="install-btn" title="Install App to Home Screen">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
-          </svg>
-        </button>
-        <button class="icon-btn" id="qr-open-btn" title="Phone Connect QR Code">
-          <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4zm2 2v2h2V6H6zm8-2h6v6h-6V4zm2 2v2h2V6h-2zM4 14h6v6H4v-6zm2 2v2h2v-2H6zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm2 2h2v2h-2v-2zm2-2h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2z"/></svg>
+
+        <!-- Standby HUD Button -->
+        <button class="tool-btn standby-pill-btn" id="open-standby-btn" title="Open Fullscreen Hardware HUD & Standby Mode">
+          <span>🖥️</span> <span>Standby</span>
         </button>
       </div>
     </header>
+
+    <!-- Mobile Segmented View Switcher (Visible on mobile screens < 768px) -->
+    <div class="mobile-view-tabs" id="mobile-view-tabs">
+      <button class="view-tab-btn active" data-view="apps" id="view-apps-btn">🎵 Apps</button>
+      <button class="view-tab-btn" data-view="shortcuts" id="view-shortcuts-btn">⚡ Deck</button>
+      <button class="view-tab-btn" data-view="split" id="view-split-btn">Split</button>
+    </div>
 
     <!-- Master Volume Bar: Full Width & Compact -->
     <div class="master-tile" id="master-tile">
@@ -1255,16 +3266,90 @@
     <div class="hud-hint">Slide ◄ Left to Decrease &bull; Right to Increase ►</div>
   </div>
 
-  <!-- Voice Floating HUD Pill -->
-  <div class="voice-hud" id="voice-hud">
-    <div class="voice-waves">
-      <span class="voice-wave-bar"></span>
-      <span class="voice-wave-bar"></span>
-      <span class="voice-wave-bar"></span>
-      <span class="voice-wave-bar"></span>
+  <!-- Dynamic Island (Bottom Center Floating Control Hub) -->
+  <div class="dynamic-island-wrap" id="dynamic-island-wrap">
+    <div class="dynamic-island" id="dynamic-island">
+      <!-- Resting Mode: 3 Actions (Global Mic Mute, AI Assistant Mic, Discord Deafen) -->
+      <div class="island-pill" id="island-pill">
+        <!-- Windows App Launcher Pill (Start Menu) -->
+        <button class="island-btn island-launcher-btn" id="island-launcher-btn" title="Windows App Launcher (Start Menu)">
+          <span class="island-icon-wrap"><span style="font-size:1.05rem;">🪟</span></span>
+          <span class="island-label">Apps</span>
+        </button>
+
+        <!-- Desk Pomodoro Focus Timer directly in Dynamic Island -->
+        <button class="island-btn island-pomo-btn" id="island-pomo-btn" title="Desk Pomodoro: Tap to Start/Pause, Long-press for Settings">
+          <span class="island-icon-wrap" id="island-pomo-icon-wrap">
+            <span class="pomo-dot" id="island-pomo-dot"></span>
+            <span class="pomo-clock-icon">⏱️</span>
+          </span>
+          <span class="island-label" id="island-pomo-clock">25:00</span>
+        </button>
+
+        <!-- Center AI Assistant Button -->
+        <button class="island-btn island-ai-btn" id="island-ai-btn" title="Smart Assistant (Ollama NLP)">
+          <div class="ai-glow-orb">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 2l2.4 5.6L20 10l-5.6 2.4L12 18l-2.4-5.6L4 10l5.6-2.4L12 2zm7 15l1.2 2.8L23 21l-2.8 1.2L19 25l-1.2-2.8L15 21l2.8-1.2L19 17zm-14 0l1.2 2.8L9 21l-2.8 1.2L5 25l-1.2-2.8L1 21l2.8-1.2L5 17z"/>
+            </svg>
+          </div>
+          <span class="island-label">Assistant</span>
+        </button>
+
+        <!-- Discord Deafen Button (Ctrl+F1) -->
+        <button class="island-btn island-deafen-btn" id="island-deafen-btn" title="Discord Deafen (Ctrl+F1)">
+          <span class="island-icon-wrap" id="island-deafen-icon-wrap">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 3a9 9 0 0 0-9 9v7c0 1.1.9 2 2 2h4v-8H5v-1c0-3.87 3.13-7 7-7s7 3.13 7 7v1h-4v8h4c1.1 0 2-.9 2-2v-7a9 9 0 0 0-9-9z"/>
+            </svg>
+          </span>
+          <span class="island-label" id="island-deafen-label">Deafen</span>
+        </button>
+      </div>
+
+      <!-- Expanded State (Active Voice Assistant & Smart NLP) -->
+      <div class="island-expanded" id="island-expanded" style="display: none;">
+        <div class="island-expanded-top">
+          <div class="island-wave-box" id="island-wave-box" style="display: none;">
+            <span class="island-wave-bar"></span>
+            <span class="island-wave-bar"></span>
+            <span class="island-wave-bar"></span>
+            <span class="island-wave-bar"></span>
+            <span class="island-wave-bar"></span>
+          </div>
+          <div class="island-content">
+            <div class="island-status-tag">
+              <span class="island-status-dot" id="island-status-dot"></span>
+              <span id="island-model-badge">🤖 Smart Assistant (Ollama NLP)</span>
+            </div>
+            <div class="island-transcript" id="island-transcript">Listening... Speak or type below</div>
+          </div>
+          <button class="island-mic-toggle-btn" id="island-mic-toggle-btn" title="Toggle Voice Listening">🎙️</button>
+          <button class="island-cancel-btn" id="island-cancel-btn" title="Close Assistant">✕</button>
+        </div>
+
+        <!-- Inline Smart Assistant Input -->
+        <div class="island-input-row" id="island-input-row">
+          <input type="text" class="island-cmd-input" id="island-cmd-input" placeholder="Type command e.g. 'mute mic', 'volume 50%', 'trim ram'..." autocomplete="off">
+          <button class="island-cmd-submit" id="island-cmd-submit" title="Run Command">➤</button>
+        </div>
+
+        <!-- Quick Command Chips -->
+        <div class="island-quick-chips" id="island-quick-chips">
+          <button class="island-chip" data-cmd="mute mic">🎙️ Mute Mic</button>
+          <button class="island-chip" data-cmd="deafen discord">🎧 Deafen</button>
+          <button class="island-chip" data-cmd="set volume to 50%">🔊 Vol 50%</button>
+          <button class="island-chip" data-cmd="clean ram">🧹 Trim RAM</button>
+          <button class="island-chip" data-cmd="note Review audio mixer code">📝 Add Note</button>
+        </div>
+
+        <!-- Permission / Secure Context Notice -->
+        <div class="island-mic-notice" id="island-mic-notice" style="display: none;">
+          <span id="island-mic-notice-text">Microphone access requires permission.</span>
+          <button class="island-notice-btn" id="island-request-perm-btn">Allow Mic</button>
+        </div>
+      </div>
     </div>
-    <div class="voice-text" id="voice-text">Listening... Speak now</div>
-    <button class="voice-stop-btn" id="voice-stop-btn" title="Stop listening">✕</button>
   </div>
 
   <!-- Action Feedback Toast -->
@@ -1311,6 +3396,7 @@
               <option value="command">Run Windows Command / App</option>
               <option value="obs_record">Toggle OBS Studio Recording</option>
               <option value="discord_deafen">Discord Deafen (Ctrl+F1)</option>
+              <option value="global_mic_mute">Global Mic Mute</option>
               <option value="lock_pc">Lock Windows PC</option>
               <option value="mute_master">Panic Mute Master Audio</option>
             </select>
@@ -1388,6 +3474,545 @@
       </div>
 
       <button class="close-btn" id="install-close-btn" style="margin-top: 4px;">Got It</button>
+    </div>
+  </div>
+
+  <!-- Dynamic Roaming Pixel Pet ("Byte") -->
+  <div class="roaming-pet" id="roaming-pet" title="Byte - Tap to pet, drag to move!">
+
+    
+    <!-- Floating Hearts -->
+    <div class="pet-hearts" id="roaming-pet-hearts"></div>
+
+    <!-- Floating Zzz -->
+    <div class="pet-zzz" id="roaming-pet-zzz" style="display:none;">
+      <span class="zzz-letter z1">Z</span>
+      <span class="zzz-letter z2">z</span>
+      <span class="zzz-letter z3">z</span>
+    </div>
+
+    <!-- Play Ball -->
+    <div class="pet-ball" id="roaming-pet-ball" style="display:none;">⚽</div>
+
+    <!-- Pixel Pet Sprite -->
+    <div class="pixel-pet-wrap" id="roaming-pet-wrap">
+      <svg class="pixel-pet-svg" id="roaming-pet-svg" viewBox="0 0 24 24" width="38" height="38">
+        <!-- Animated Pixel Pet Body -->
+        <g id="roaming-body-group">
+          <!-- Ears -->
+          <rect class="p-fur" x="4" y="3" width="4" height="4" fill="#a78bfa"/>
+          <rect class="p-fur" x="16" y="3" width="4" height="4" fill="#a78bfa"/>
+          <rect class="p-ear" x="5" y="4" width="2" height="2" fill="#f472b6"/>
+          <rect class="p-ear" x="17" y="4" width="2" height="2" fill="#f472b6"/>
+          <!-- Head -->
+          <rect class="p-fur" x="4" y="6" width="16" height="11" rx="2" fill="#8b5cf6"/>
+          <!-- Cheeks -->
+          <rect class="p-blush" x="5" y="12" width="2" height="1" fill="#f43f5e" opacity="0.75"/>
+          <rect class="p-blush" x="17" y="12" width="2" height="1" fill="#f43f5e" opacity="0.75"/>
+          <!-- Eyes -->
+          <g id="roaming-eyes-open">
+            <rect class="p-eye p-eye-l" x="7" y="9" width="3" height="4" fill="#ffffff"/>
+            <rect class="p-pupil p-pupil-l" x="8" y="10" width="2" height="3" fill="#0f172a"/>
+            <rect class="p-shine" x="8" y="10" width="1" height="1" fill="#ffffff"/>
+
+            <rect class="p-eye p-eye-r" x="14" y="9" width="3" height="4" fill="#ffffff"/>
+            <rect class="p-pupil p-pupil-r" x="14" y="10" width="2" height="3" fill="#0f172a"/>
+            <rect class="p-shine" x="14" y="10" width="1" height="1" fill="#ffffff"/>
+          </g>
+          <g id="roaming-eyes-closed" style="display:none;">
+            <path d="M7 11 Q8.5 13 10 11" fill="none" stroke="#2e1065" stroke-width="1.2"/>
+            <path d="M14 11 Q15.5 13 17 11" fill="none" stroke="#2e1065" stroke-width="1.2"/>
+          </g>
+
+          <!-- Snout & Mouth -->
+          <rect class="p-snout" x="10" y="12" width="4" height="2" fill="#ddd6fe"/>
+          <rect class="p-nose" x="11" y="12" width="2" height="1" fill="#3b0764"/>
+          
+          <!-- Body & Paws -->
+          <rect class="p-fur" x="6" y="17" width="12" height="4" rx="1" fill="#7c3aed"/>
+          <g id="roaming-paws">
+            <rect class="p-paw p-paw-l" x="7" y="20" width="3" height="2" fill="#c4b5fd"/>
+            <rect class="p-paw p-paw-r" x="14" y="20" width="3" height="2" fill="#c4b5fd"/>
+          </g>
+        </g>
+
+        <!-- Dynamic Costumes & Accessories -->
+        <!-- Coding Glasses & Mini Laptop -->
+        <g class="pet-acc" id="roaming-acc-coding" style="display:none;">
+          <rect x="5" y="9" width="6" height="3" fill="none" stroke="#38bdf8" stroke-width="1"/>
+          <rect x="13" y="9" width="6" height="3" fill="none" stroke="#38bdf8" stroke-width="1"/>
+          <line x1="11" y1="10" x2="13" y2="10" stroke="#38bdf8" stroke-width="1"/>
+          <rect x="7" y="18" width="10" height="3" rx="1" fill="#1e293b"/>
+          <rect x="8" y="19" width="8" height="1.5" fill="#38bdf8"/>
+        </g>
+
+        <!-- Music Headphones -->
+        <g class="pet-acc" id="roaming-acc-music" style="display:none;">
+          <path d="M3 11 A 9 9 0 0 1 21 11" fill="none" stroke="#ec4899" stroke-width="2"/>
+          <rect x="2" y="9" width="3" height="5" rx="1" fill="#f43f5e"/>
+          <rect x="19" y="9" width="3" height="5" rx="1" fill="#f43f5e"/>
+        </g>
+
+        <!-- Meeting Headset -->
+        <g class="pet-acc" id="roaming-acc-meeting" style="display:none;">
+          <path d="M3 10 A 9 9 0 0 1 21 10" fill="none" stroke="#10b981" stroke-width="1.5"/>
+          <rect x="2" y="9" width="2" height="4" fill="#10b981"/>
+          <path d="M3 13 Q 7 16 11 15" fill="none" stroke="#10b981" stroke-width="1"/>
+          <circle cx="11" cy="15" r="1.2" fill="#ef4444"/>
+        </g>
+
+        <!-- Sleeping Cap -->
+        <g class="pet-acc" id="roaming-acc-sleep" style="display:none;">
+          <path d="M5 6 L 14 1 L 19 6 Z" fill="#6366f1"/>
+          <circle cx="14" cy="1" r="1.5" fill="#fef08a"/>
+        </g>
+
+        <!-- Sweat Drop -->
+        <g class="pet-acc" id="roaming-acc-sweat" style="display:none;">
+          <path d="M19 6 C18 9 21 11 21 9 Z" fill="#38bdf8"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Granular System Telemetry & Quick Utilities Modal -->
+  <div class="modal-overlay" id="telemetry-modal">
+    <div class="modal-box" style="text-align: left; max-width: 480px; width: 95vw; max-height: 85vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h2 style="font-size: 1.15rem; display: flex; align-items: center; gap: 6px;">📊 Hardware Telemetry & Quick Utilities</h2>
+        <button class="icon-btn" id="telem-modal-close" style="width: 28px; height: 28px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <!-- Quick Vitals Matrix -->
+      <div class="telem-detail-grid">
+        <div class="telem-detail-card">
+          <span class="td-label" style="color:#60a5fa;">⚡ CPU</span>
+          <span class="td-val" id="td-cpu-val">--%</span>
+          <span class="td-sub">Windows Load</span>
+        </div>
+        <div class="telem-detail-card">
+          <span class="td-label" style="color:#34d399;">🎮 GPU</span>
+          <span class="td-val" id="td-gpu-val">--%</span>
+          <span class="td-sub" id="td-gpu-temp">RTX 5060</span>
+        </div>
+        <div class="telem-detail-card">
+          <span class="td-label" style="color:#c084fc;">🧠 RAM</span>
+          <span class="td-val" id="td-ram-val">--%</span>
+          <span class="td-sub" id="td-ram-used">-- GB</span>
+        </div>
+        <div class="telem-detail-card">
+          <span class="td-label" style="color:#f59e0b;">📶 PING</span>
+          <span class="td-val" id="td-ping-val">-- ms</span>
+          <span class="td-sub">Low Latency</span>
+        </div>
+      </div>
+
+      <!-- RAM Optimizer -->
+      <div style="margin: 4px 0 12px 0; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #f8fafc;">RAM Working Set Optimizer</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Trims background process working sets to reclaim unneeded RAM.</div>
+          </div>
+          <button class="close-btn" id="clean-ram-btn" style="height: 32px; font-size: 0.75rem; background: rgba(168, 85, 247, 0.25); border: 1px solid #a855f7;">🧹 Trim RAM</button>
+        </div>
+      </div>
+
+      <!-- Developer Port Manager -->
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; flex: 1; display: flex; flex-direction: column;">
+        <div style="font-size: 0.82rem; font-weight: 700; color: #f8fafc; margin-bottom: 2px;">Developer Port Manager</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px;">Kill hung dev servers or clear listening sockets in 1-tap.</div>
+
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <input type="number" id="custom-port-input" placeholder="Port e.g. 3000" style="flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 8px; color: white; padding: 6px 10px; font-size: 0.8rem; outline: none;">
+          <button class="close-btn" id="custom-port-kill-btn" style="height: 32px; font-size: 0.76rem; background: rgba(239, 68, 68, 0.25); border: 1px solid #ef4444; color: #fca5a5;">🚫 Kill Port</button>
+        </div>
+
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px;">
+          <button class="port-chip" data-port="3000">:3000</button>
+          <button class="port-chip" data-port="5173">:5173 (Vite)</button>
+          <button class="port-chip" data-port="8080">:8080</button>
+          <button class="port-chip" data-port="5000">:5000</button>
+          <button class="port-chip" data-port="8000">:8000</button>
+        </div>
+
+        <div style="font-size: 0.72rem; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">ACTIVE LISTENING PORTS</div>
+        <div class="suggestions-scroll" id="active-ports-list" style="max-height: 110px; overflow-y: auto; font-family: monospace; font-size: 0.75rem;">
+          <div style="color: var(--text-muted); padding: 4px;">Scanning active ports...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Active Ports & Process Socket Manager Modal (Main HUD) -->
+  <div class="modal-overlay" id="ports-modal">
+    <div class="modal-box" style="text-align: left; max-width: 580px; width: 95vw; max-height: 88vh; display: flex; flex-direction: column;">
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <h2 style="font-size: 1.15rem; display: flex; align-items: center; gap: 6px; margin: 0;">🔌 Active Ports & Sockets</h2>
+          <span class="ports-badge" id="ports-modal-count" style="font-size: 0.72rem; padding: 2px 8px;">0 Open</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button class="icon-btn" id="refresh-ports-btn" title="Scan & Refresh Ports" style="width: 32px; height: 32px; font-size: 0.85rem;">🔄</button>
+          <button class="icon-btn" id="ports-modal-close" style="width: 32px; height: 32px; font-size: 0.85rem;">✕</button>
+        </div>
+      </div>
+
+      <!-- Security Assessment Summary Triage Bar -->
+      <div class="ports-triage-summary-bar">
+        <div class="ports-triage-item sec-suspicious" id="triage-box-suspicious" data-filter="suspicious" title="View Suspicious / Risky Ports">
+          <span class="triage-icon">🚨</span>
+          <span class="triage-text" id="ports-stat-suspicious">0 Suspicious</span>
+        </div>
+        <div class="ports-triage-item sec-exposed" id="triage-box-exposed" data-filter="exposed" title="View LAN / Wi-Fi Exposed Ports">
+          <span class="triage-icon">⚠️</span>
+          <span class="triage-text" id="ports-stat-exposed">0 LAN Exposed</span>
+        </div>
+        <div class="ports-triage-item sec-safe" id="triage-box-safe" data-filter="safe" title="View Localhost Safe Ports">
+          <span class="triage-icon">🟢</span>
+          <span class="triage-text" id="ports-stat-safe">0 Safe Local</span>
+        </div>
+        <div class="ports-triage-item sec-system" id="triage-box-system" data-filter="system" title="View Core Windows System Ports">
+          <span class="triage-icon">🛡️</span>
+          <span class="triage-text" id="ports-stat-system">0 System</span>
+        </div>
+      </div>
+
+      <!-- Filter Tabs & Real-Time Search -->
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
+        <div class="ports-filter-bar" id="ports-filter-pills">
+          <button class="ports-filter-pill active" data-filter="all">All (<span id="count-ports-all">0</span>)</button>
+          <button class="ports-filter-pill sec-suspicious" data-filter="suspicious">🚨 Suspicious (<span id="count-ports-suspicious">0</span>)</button>
+          <button class="ports-filter-pill sec-exposed" data-filter="exposed">⚠️ LAN Exposed (<span id="count-ports-exposed">0</span>)</button>
+          <button class="ports-filter-pill sec-safe" data-filter="safe">🟢 Safe (<span id="count-ports-safe">0</span>)</button>
+          <button class="ports-filter-pill sec-system" data-filter="system">🛡️ System (<span id="count-ports-system">0</span>)</button>
+        </div>
+        <div style="position: relative;">
+          <input type="text" id="ports-search-filter" placeholder="🔍 Search port, process, PID, path, or risk reason..." style="width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 8px; color: white; padding: 7px 12px; font-size: 0.82rem; outline: none;">
+        </div>
+      </div>
+
+      <!-- Quick Port Killer Input & Dev Chips -->
+      <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 9px 10px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 0.74rem; font-weight: 700; color: #f8fafc;">Close Port by Number</span>
+          <span style="font-size: 0.65rem; color: var(--text-muted);">Terminate dev servers / release locked ports</span>
+        </div>
+        <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+          <input type="number" id="ports-quick-input" placeholder="e.g. 3000, 5173, 8080" style="flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--card-border); border-radius: 8px; color: white; padding: 6px 10px; font-size: 0.82rem; outline: none;">
+          <button class="port-kill-action-btn" id="ports-quick-kill-btn" style="padding: 6px 14px; font-size: 0.78rem;">🚫 Close Port</button>
+        </div>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="ports-quick-chips">
+          <button class="port-chip" data-port="3000">:3000</button>
+          <button class="port-chip" data-port="5173">:5173 (Vite)</button>
+          <button class="port-chip" data-port="8000">:8000 (FastAPI)</button>
+          <button class="port-chip" data-port="8080">:8080</button>
+          <button class="port-chip" data-port="5000">:5000</button>
+        </div>
+      </div>
+
+      <!-- Active Ports List Section Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.05em;" id="ports-section-heading">ACTIVE LISTENING PORTS & PROCESS METADATA</span>
+        <span style="font-size: 0.68rem; color: #64748b;" id="ports-scan-status">Live</span>
+      </div>
+
+      <div class="ports-grid-list" id="hud-ports-cards-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Desk Pomodoro Focus Timer Modal -->
+  <div class="modal-overlay" id="pomodoro-modal">
+    <div class="modal-box" style="text-align: center; max-width: 360px; width: 92vw; padding: 22px 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+        <h2 style="font-size: 1.15rem;">⏱️ Desk Pomodoro</h2>
+        <button class="icon-btn" id="pomo-modal-close" style="width: 28px; height: 28px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div style="display: flex; gap: 4px; justify-content: center; background: rgba(255,255,255,0.06); border-radius: 999px; padding: 3px; margin-bottom: 16px;">
+        <button class="view-tab-btn active" id="pomo-tab-focus" style="padding: 4px 10px; font-size: 0.72rem;">Focus (25m)</button>
+        <button class="view-tab-btn" id="pomo-tab-short" style="padding: 4px 10px; font-size: 0.72rem;">Break (5m)</button>
+        <button class="view-tab-btn" id="pomo-tab-long" style="padding: 4px 10px; font-size: 0.72rem;">Long (15m)</button>
+      </div>
+
+      <!-- Circular Countdown Display -->
+      <div style="position: relative; width: 150px; height: 150px; margin: 0 auto 16px auto;">
+        <svg viewBox="0 0 100 100" width="150" height="150" style="transform: rotate(-90deg);">
+          <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+          <circle id="pomo-progress-ring" cx="50" cy="50" r="42" stroke="url(#pomoGrad)" stroke-width="8" stroke-dasharray="264" stroke-dashoffset="0" stroke-linecap="round" fill="none" style="transition: stroke-dashoffset 1s linear;"/>
+          <defs>
+            <linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;">
+          <span id="pomo-time-display" style="font-size: 1.8rem; font-weight: 800; font-family: monospace; letter-spacing: -0.02em;">25:00</span>
+          <span id="pomo-state-label" style="font-size: 0.68rem; color: #a78bfa; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Deep Work</span>
+        </div>
+      </div>
+
+      <p style="font-size: 0.74rem; color: #34d399; margin-bottom: 14px;">⭐ Awards Byte +50 Focus XP on completion!</p>
+
+      <!-- Controls -->
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button class="close-btn" id="pomo-toggle-btn" style="flex: 1; height: 40px; font-size: 0.85rem;">▶ Start Focus</button>
+        <button class="close-btn" id="pomo-reset-btn" style="width: 80px; height: 40px; font-size: 0.8rem; background: rgba(255,255,255,0.1); color: var(--text-muted);">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Windows App Launcher Modal (Start Menu) -->
+  <div class="modal-overlay" id="app-launcher-modal">
+    <div class="modal-box" style="text-align: left; max-width: 520px; width: 95vw; max-height: 85vh; display: flex; flex-direction: column; padding: 18px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.3rem;">🪟</span>
+          <div>
+            <h2 style="font-size: 1.12rem; margin: 0; line-height: 1.2;">Windows App Launcher</h2>
+            <div style="font-size: 0.68rem; color: var(--text-muted);">Launch installed Windows apps & tools on your PC</div>
+          </div>
+        </div>
+        <button class="icon-btn" id="launcher-modal-close" style="width: 28px; height: 28px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <!-- Search Input -->
+      <div style="position: relative; margin-bottom: 8px;">
+        <input type="text" id="launcher-search-input" placeholder="🔍 Search apps (e.g. Chrome, Spotify, Calculator)..." style="width: 100%; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--card-border); border-radius: 10px; color: white; padding: 8px 12px; font-size: 0.82rem; outline: none;">
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="launcher-cat-tabs" id="launcher-cat-tabs">
+        <button class="launcher-tab active" data-cat="all">All (<span id="launcher-count-all">0</span>)</button>
+        <button class="launcher-tab" data-cat="Utilities">Utilities</button>
+        <button class="launcher-tab" data-cat="System">System</button>
+        <button class="launcher-tab" data-cat="Games">Games</button>
+        <button class="launcher-tab" data-cat="Developer">Developer</button>
+        <button class="launcher-tab" data-cat="Media">Media</button>
+        <button class="launcher-tab" data-cat="Web">Web</button>
+      </div>
+
+      <!-- App Grid / List -->
+      <div class="suggestions-scroll" id="launcher-apps-list" style="max-height: 48vh; overflow-y: auto; flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; padding-top: 4px;">
+        <!-- Dynamically rendered app cards -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Standby Mode HUD Overlay (OLED Low-Power Ambient Display) -->
+  <div class="standby-hud" id="standby-hud" data-dim="ambient" style="display:none;">
+    <div class="standby-drift-wrap" id="standby-drift-wrap">
+      
+      <!-- Top Status Bar (Non-clickable informative strip) -->
+      <div class="standby-header">
+        <div class="standby-status-pills">
+          <span class="standby-status-pill accent" id="standby-gpu-badge">
+            <span class="pill-dot">●</span> <span id="standby-gpu-badge-text">RTX 5060 LIVE HUD</span>
+          </span>
+          <span class="standby-status-pill power-ac" id="standby-power-badge">
+            <span>⚡</span> <span id="standby-power-badge-text">AC Mains (Desktop)</span>
+          </span>
+          <span class="standby-status-pill" id="standby-uptime-badge">
+            <span>⏱</span> <span id="standby-uptime-badge-text">Uptime: 5h 34m</span>
+          </span>
+        </div>
+
+        <div class="standby-wake-pill">
+          <span>🌙</span> <span>TAP ANYWHERE TO WAKE</span>
+        </div>
+      </div>
+
+      <!-- Hero Section: Giant Big Number Clock & Master Volume Status -->
+      <div class="standby-hero-row">
+        <!-- Giant Standby Digital Clock Card -->
+        <div class="standby-clock-card">
+          <div class="standby-card-sublabel">LOCAL TIME &bull; DESK DOCK</div>
+          <div class="standby-clock-display" id="standby-clock-display">
+            <div class="standby-clock-big">
+              <span id="standby-clock-hours">12</span><span class="standby-colon">:</span><span id="standby-clock-mins">00</span>
+            </div>
+            <div class="standby-time-stacked">
+              <span class="standby-sec-badge" id="standby-sec-badge">:00</span>
+              <span class="standby-ampm-badge" id="standby-ampm-badge">PM</span>
+            </div>
+          </div>
+          <!-- Hidden fallback for legacy id -->
+          <span id="standby-clock" style="display:none;">12:00:00 PM</span>
+          <div class="standby-date-row">
+            <span class="standby-date-pill">DATE</span>
+            <span id="standby-date">Saturday, November 14, 2026</span>
+          </div>
+        </div>
+
+        <!-- Master Volume Vital Card (Big Number & Real Audio Info - Readout Only) -->
+        <div class="standby-volume-card">
+          <div class="standby-vol-header">
+            <div class="standby-vol-title">
+              <span>🔊</span> <span>MASTER AUDIO</span>
+            </div>
+            <span class="standby-vol-status-badge" id="standby-vol-status-badge">ACTIVE</span>
+          </div>
+
+          <div class="standby-vol-main">
+            <div class="standby-big-vol" id="standby-big-vol">
+              <span id="standby-vol-num">100</span><span class="vol-unit">%</span>
+            </div>
+          </div>
+
+          <div class="standby-vol-track">
+            <div class="standby-vol-fill" id="standby-vol-fill" style="width: 100%;"></div>
+          </div>
+
+          <div class="standby-audio-meta" id="standby-audio-meta">
+            Default Device: Speakers &bull; No active app streams
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Hardware Vital Widgets (Big Numbers) -->
+      <div class="standby-vitals-grid">
+        <!-- CPU Gauge Widget -->
+        <div class="standby-vital-card">
+          <div class="standby-vital-title">
+            <span>⚡ CPU LOAD</span>
+            <span class="standby-vital-tag" id="standby-cpu-tag">Optimal</span>
+          </div>
+          <div class="standby-big-metric">
+            <span id="gauge-cpu-val">0%</span>
+          </div>
+          <div class="standby-metric-sub" id="gauge-cpu-sub">
+            12 Cores &bull; NORMAL
+          </div>
+          <div class="standby-vital-bar-track">
+            <div class="standby-vital-bar-fill" id="vital-cpu-bar" style="width: 0%; background: linear-gradient(90deg, #0ea5e9, #38bdf8);"></div>
+          </div>
+          <!-- Hidden fallback for legacy radial gauge elements -->
+          <svg style="display:none;"><circle id="gauge-cpu-bar"></circle></svg>
+        </div>
+
+        <!-- GPU Gauge Widget (RTX 5060) -->
+        <div class="standby-vital-card">
+          <div class="standby-vital-title">
+            <span id="standby-gpu-card-title">🎮 GPU LOAD</span>
+            <span class="standby-vital-tag" id="gauge-gpu-temp">43.9°C</span>
+          </div>
+          <div class="standby-big-metric">
+            <span id="gauge-gpu-val">8%</span>
+          </div>
+          <div class="standby-metric-sub" id="gauge-gpu-vram">
+            783 MB / 8.1 GB VRAM
+          </div>
+          <div class="standby-vital-bar-track">
+            <div class="standby-vital-bar-fill" id="gauge-gpu-vram-fill" style="width: 10%; background: linear-gradient(90deg, #10b981, #06b6d4);"></div>
+          </div>
+          <svg style="display:none;"><circle id="gauge-gpu-bar"></circle></svg>
+        </div>
+
+        <!-- RAM Gauge Widget -->
+        <div class="standby-vital-card">
+          <div class="standby-vital-title">
+            <span>🧠 SYSTEM RAM</span>
+            <span class="standby-vital-tag" id="gauge-ram-avail">16.6 GB Free</span>
+          </div>
+          <div class="standby-big-metric">
+            <span id="gauge-ram-val">46%</span>
+          </div>
+          <div class="standby-metric-sub" id="gauge-ram-sub">
+            14.5 GB / 31.2 GB Used
+          </div>
+          <div class="standby-vital-bar-track">
+            <div class="standby-vital-bar-fill" id="vital-ram-bar" style="width: 46%; background: linear-gradient(90deg, #8b5cf6, #c084fc);"></div>
+          </div>
+          <svg style="display:none;"><circle id="gauge-ram-bar"></circle></svg>
+        </div>
+
+        <!-- Network Gauge Widget -->
+        <div class="standby-vital-card">
+          <div class="standby-vital-title">
+            <span>📶 NETWORK</span>
+            <span class="standby-vital-tag" id="standby-ping-badge">16 ms &bull; Optimal</span>
+          </div>
+          <div class="standby-big-metric">
+            <span id="standby-down-speed">0.0 KB/s</span>
+          </div>
+          <div class="standby-metric-sub">
+            <span>Upload: <strong id="standby-up-speed" style="color:#c084fc;">0.0 KB/s</strong></span>
+          </div>
+          <div class="standby-vital-bar-track">
+            <div class="standby-vital-bar-fill" id="vital-net-bar" style="width: 15%; background: linear-gradient(90deg, #38bdf8, #818cf8);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Deck: Power/Uptime, Sparkline & Sleeping Byte -->
+      <div class="standby-bottom-deck">
+        <!-- Power & Environment Telemetry Dock -->
+        <div class="standby-deck-card standby-power-summary">
+          <div class="standby-deck-label">
+            <span>⚡ HARDWARE & POWER</span>
+            <span class="standby-power-val" id="standby-power-source-val">AC Mains Wall Power ⚡</span>
+          </div>
+          <div class="standby-power-row">
+            <span>System Uptime</span>
+            <span class="standby-power-val" id="standby-uptime-val">5h 34m</span>
+          </div>
+          <div class="standby-power-row">
+            <span>Active Ports</span>
+            <span class="standby-power-val" id="standby-ports-val">Clean / Idle</span>
+          </div>
+          <span id="standby-gpu-fullname" style="display:none;">NVIDIA GeForce RTX 5060</span>
+        </div>
+
+        <!-- Real-Time Network Speed Sparkline -->
+        <div class="standby-deck-card standby-network-summary">
+          <div class="standby-deck-label">
+            <span>📈 LIVE THROUGHPUT</span>
+            <span class="standby-spark-legend">
+              ⬇ <span id="standby-down-speed-legend">0.0 KB/s</span> &bull; ⬆ <span id="standby-up-speed-legend">0.0 KB/s</span>
+            </span>
+          </div>
+          <div class="sparkline-mini-wrap">
+            <svg id="standby-sparkline" viewBox="0 0 400 38" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="downGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
+                </linearGradient>
+                <linearGradient id="upGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#c084fc" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#c084fc" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+              <path id="sparkline-down-area" fill="url(#downGrad)"/>
+              <path id="sparkline-down-line" fill="none" stroke="#38bdf8" stroke-width="2"/>
+              <path id="sparkline-up-line" fill="none" stroke="#c084fc" stroke-width="1.8" stroke-dasharray="3,3"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Resting Byte Sleeping Habitat in Standby (Non-interactive) -->
+        <div class="standby-deck-card standby-byte-summary" id="standby-pet-nest">
+          <div class="nest-cushion-mini">
+            <div class="sleeping-byte-wrap">
+              <span class="nest-zzz">Zzz...</span>
+              <div class="nest-pet-avatar">🐾</div>
+            </div>
+            <div class="nest-meta">
+              <span class="nest-name">Byte is resting</span>
+              <span class="nest-hint">Standby active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="standby-footer-hint">
+        <span>Touch or click anywhere to return to Cockpit &bull; OLED Dim-Lit Battery Saver Active</span>
+      </div>
     </div>
   </div>
 
@@ -1640,6 +4265,9 @@
       if (masterPercent) masterPercent.textContent = muted ? 'MUTED' : `${vol}%`;
       if (masterTile) masterTile.classList.toggle('is-muted', muted);
       if (masterDesc) masterDesc.textContent = muted ? '🔇 Muted &bull; Tap to Unmute' : 'Tap to Mute &bull; Slide Horizontal for Volume';
+      if (typeof updateStandbyVolumeUI === 'function') {
+        updateStandbyVolumeUI(vol, muted);
+      }
     }
 
     masterTile.addEventListener('pointerdown', (e) => {
@@ -1828,6 +4456,9 @@
       }
       if (state.sessions && !isDraggingGesture) {
         renderAppsGrid(state.sessions);
+      }
+      if (state.mic && typeof updateMicUI === 'function') {
+        updateMicUI(state.mic.muted, state.mic.available);
       }
     }
 
@@ -2235,11 +4866,17 @@
           payload.keys = keys;
           payload.description = `Hotkey: ${keys.join(' + ')}`;
         } else if (type === 'discord_deafen') {
+          payload.action_type = 'discord_deafen';
           payload.type = 'hotkey';
           payload.keys = ['ctrl', 'f1'];
           payload.color = '#5865f2';
           payload.icon = icon !== '⚡' ? icon : 'headphones';
           payload.description = 'Toggle Discord Deafen / Undeafen (Ctrl+F1)';
+        } else if (type === 'global_mic_mute') {
+          payload.action_type = 'global_mic_mute';
+          payload.color = '#f43f5e';
+          payload.icon = icon !== '⚡' ? icon : 'mic_off';
+          payload.description = 'Toggle Physical Microphone Mute';
         } else if (type === 'command') {
           const cmdInput = document.getElementById('sc-cmd-input');
           const cmd = cmdInput ? cmdInput.value.trim() : '';
@@ -2292,17 +4929,110 @@
     if (viewSplitBtn) viewSplitBtn.addEventListener('click', () => setMobileView('split'));
 
     // -----------------------------------------------------------
-    // Voice Assistant & NLP (Web Speech API)
+    // Discord Deafen Control (Ctrl+F1)
     // -----------------------------------------------------------
+    let isDiscordDeafened = false;
+    const islandDeafenBtn = document.getElementById('island-deafen-btn');
+
+    if (islandDeafenBtn) {
+      islandDeafenBtn.addEventListener('click', async () => {
+        haptic(45);
+        isDiscordDeafened = !isDiscordDeafened;
+        islandDeafenBtn.classList.toggle('is-deafened', isDiscordDeafened);
+        const deafenLabel = document.getElementById('island-deafen-label');
+        if (deafenLabel) deafenLabel.textContent = isDiscordDeafened ? 'Deafened' : 'Deafen';
+        try {
+          const res = await fetch('/api/discord/deafen', { method: 'POST' });
+          const data = await res.json();
+          showToast(isDiscordDeafened ? 'Discord Deafened (Ctrl+F1)' : 'Discord Undeafened (Ctrl+F1)', '🎧');
+        } catch (e) {
+          showToast('Failed to trigger deafen', '✕', true);
+        }
+      });
+    }
+
+    // 3. Dynamic Island Morph & Smart AI Assistant (Ollama NLP)
     let recognition = null;
     let isListening = false;
-    const voiceBtn = document.getElementById('voice-btn');
-    const voiceHud = document.getElementById('voice-hud');
-    const voiceText = document.getElementById('voice-text');
-    const voiceStopBtn = document.getElementById('voice-stop-btn');
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let islandCollapseTimer = null;
+
+    const dynamicIsland = document.getElementById('dynamic-island');
+    const islandPill = document.getElementById('island-pill');
+    const islandExpanded = document.getElementById('island-expanded');
+    const islandWaveBox = document.getElementById('island-wave-box');
+    const islandTranscript = document.getElementById('island-transcript');
+    const islandModelBadge = document.getElementById('island-model-badge');
+    const islandCancelBtn = document.getElementById('island-cancel-btn');
+    const islandAiBtn = document.getElementById('island-ai-btn');
+    const islandMicToggleBtn = document.getElementById('island-mic-toggle-btn');
+    const islandCmdInput = document.getElementById('island-cmd-input');
+    const islandCmdSubmit = document.getElementById('island-cmd-submit');
+    const islandQuickChips = document.querySelectorAll('.island-chip');
+    const islandMicNotice = document.getElementById('island-mic-notice');
+    const islandMicNoticeText = document.getElementById('island-mic-notice-text');
+    const islandRequestPermBtn = document.getElementById('island-request-perm-btn');
+
+    function expandIsland() {
+      clearTimeout(islandCollapseTimer);
+      if (dynamicIsland) dynamicIsland.classList.add('expanded');
+      if (islandPill) islandPill.style.display = 'none';
+      if (islandExpanded) islandExpanded.style.display = 'flex';
+      setTimeout(() => islandCmdInput?.focus(), 150);
+    }
+
+    function collapseIsland() {
+      clearTimeout(islandCollapseTimer);
+      stopListening();
+      if (dynamicIsland) dynamicIsland.classList.remove('expanded');
+      if (islandPill) islandPill.style.display = 'flex';
+      if (islandExpanded) islandExpanded.style.display = 'none';
+      if (islandCmdInput) islandCmdInput.value = '';
+      if (islandMicNotice) islandMicNotice.style.display = 'none';
+    }
+
+    async function ensureMicrophonePermission() {
+      // 1. Check if running in an insecure context (mobile Wi-Fi HTTP)
+      const isSecure = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      if (!isSecure && (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+        return {
+          ok: false,
+          reason: 'insecure_context',
+          message: 'Mobile browsers block mic over plain HTTP. Tap "Open HTTPS 🔒" or use the input below.'
+        };
+      }
+
+      // 2. Request mic permission via getUserMedia
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop tracks immediately so mic is freed for speech recognition
+          stream.getTracks().forEach(track => track.stop());
+          return { ok: true };
+        } catch (err) {
+          console.warn("getUserMedia failed or denied:", err);
+          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+            return {
+              ok: false,
+              reason: 'denied',
+              message: 'Microphone permission was denied. Tap browser address bar 🔒 to allow microphone.'
+            };
+          }
+          if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+            return { ok: false, reason: 'not_found', message: 'No microphone found on this device.' };
+          }
+          return { ok: false, reason: 'error', message: err.message || 'Microphone access could not be acquired.' };
+        }
+      }
+
+      return {
+        ok: false,
+        reason: 'unsupported',
+        message: 'Speech microphone is not available in this browser. Type below:'
+      };
+    }
 
     function initVoice() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return;
       try {
         recognition = new SpeechRecognition();
@@ -2312,9 +5042,11 @@
 
         recognition.onstart = () => {
           isListening = true;
-          if (voiceBtn) voiceBtn.classList.add('active');
-          if (voiceHud) voiceHud.classList.add('active');
-          if (voiceText) voiceText.textContent = 'Listening... Speak your command';
+          expandIsland();
+          if (islandTranscript) islandTranscript.textContent = 'Listening... Speak command';
+          if (islandModelBadge) islandModelBadge.textContent = '🤖 Local LLM (Ollama)';
+          if (islandWaveBox) islandWaveBox.style.display = 'flex';
+          if (islandMicToggleBtn) islandMicToggleBtn.classList.add('listening');
           haptic(40);
         };
 
@@ -2328,47 +5060,109 @@
               interim += event.results[i][0].transcript;
             }
           }
-          if (voiceText) voiceText.textContent = final || interim || 'Listening...';
+          const spoken = final || interim;
+          if (islandTranscript && spoken) islandTranscript.textContent = spoken;
+          if (islandCmdInput && spoken) islandCmdInput.value = spoken;
           if (final) processNlpCommand(final);
         };
 
         recognition.onerror = (event) => {
+          console.warn("Speech recognition error:", event.error);
           stopListening();
           if (event.error === 'not-allowed') {
-            fallbackTextPrompt("Microphone access is restricted over HTTP. You can type your command below:");
+            if (islandTranscript) islandTranscript.textContent = 'Microphone permission is blocked by browser.';
+            showMicNotice('Microphone permission blocked. Click to allow:', 'Grant Mic 🎙️', () => startListening());
+          } else if (event.error === 'no-speech') {
+            if (islandTranscript) islandTranscript.textContent = 'No speech detected. Type or tap 🎙️ to try again.';
+          } else {
+            if (islandTranscript) islandTranscript.textContent = `Mic issue (${event.error}). Type command below:`;
           }
         };
 
-        recognition.onend = () => stopListening();
-      } catch (e) {}
+        recognition.onend = () => {
+          if (isListening) stopListening();
+        };
+      } catch (e) {
+        console.warn("Error initializing voice:", e);
+      }
     }
 
-    function startListening() {
-      if (!SpeechRecognition) {
-        fallbackTextPrompt("Speech recognition isn't supported on this browser. Type your command below:");
+    function showMicNotice(text, btnLabel, action) {
+      if (!islandMicNotice) return;
+      islandMicNotice.style.display = 'flex';
+      if (islandMicNoticeText) islandMicNoticeText.textContent = text;
+      if (islandRequestPermBtn) {
+        islandRequestPermBtn.textContent = btnLabel;
+        islandRequestPermBtn.onclick = action;
+      }
+    }
+
+    async function startListening() {
+      expandIsland();
+
+      // 1. Explicitly request permission via getUserMedia
+      if (islandTranscript) islandTranscript.textContent = 'Requesting microphone permission...';
+      if (islandModelBadge) islandModelBadge.textContent = '🎙️ Checking Mic...';
+
+      const perm = await ensureMicrophonePermission();
+
+      if (!perm.ok) {
+        if (islandTranscript) islandTranscript.textContent = perm.message;
+        if (islandModelBadge) islandModelBadge.textContent = '⚠️ Mic Attention';
+
+        if (perm.reason === 'insecure_context') {
+          showMicNotice(perm.message, 'Switch to HTTPS 🔒', () => {
+            location.href = `https://${location.host}`;
+          });
+        } else {
+          showMicNotice(perm.message, 'Allow Mic 🎙️', () => startListening());
+        }
+        islandCmdInput?.focus();
         return;
       }
+
+      // Hide notice once permission is granted
+      if (islandMicNotice) islandMicNotice.style.display = 'none';
+
+      // 2. Check Web Speech API
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        if (islandTranscript) islandTranscript.textContent = 'Web Speech API not supported on this browser. Type below:';
+        if (islandModelBadge) islandModelBadge.textContent = '⌨️ Smart Assistant';
+        islandCmdInput?.focus();
+        return;
+      }
+
       if (!recognition) initVoice();
-      try { recognition.start(); } catch (e) {}
+
+      try {
+        isListening = true;
+        recognition.start();
+        if (islandTranscript) islandTranscript.textContent = 'Listening... Speak command';
+        if (islandWaveBox) islandWaveBox.style.display = 'flex';
+        if (islandMicToggleBtn) islandMicToggleBtn.classList.add('listening');
+      } catch (e) {
+        console.warn("recognition.start exception:", e);
+      }
     }
 
     function stopListening() {
       isListening = false;
-      if (voiceBtn) voiceBtn.classList.remove('active');
-      if (voiceHud) voiceHud.classList.remove('active');
       if (recognition) {
         try { recognition.stop(); } catch (e) {}
       }
-    }
-
-    function fallbackTextPrompt(hint) {
-      const text = prompt(hint || "Enter command for PC (e.g. 'start recording in OBS', 'mute discord', 'set volume to 50%'):");
-      if (text) processNlpCommand(text);
+      if (islandWaveBox) islandWaveBox.style.display = 'none';
+      if (islandMicToggleBtn) islandMicToggleBtn.classList.remove('listening');
     }
 
     async function processNlpCommand(commandText) {
-      if (!commandText || !commandText.trim()) return;
+      if (!commandText || !commandText.trim()) {
+        collapseIsland();
+        return;
+      }
       stopListening();
+      expandIsland();
+      if (islandTranscript) islandTranscript.textContent = '🤖 Processing with Ollama...';
       showToast(`NLP: "${commandText}"`, '🤖');
 
       try {
@@ -2380,9 +5174,15 @@
         const result = await res.json();
         haptic(45);
 
+        if (result.model && islandModelBadge) {
+          islandModelBadge.textContent = `🤖 Ollama (${result.model})`;
+        }
+
         if (result.success) {
           const toastIcon = result.action === 'create' ? '⚡' : (result.action === 'delete' ? '🗑️' : (result.action === 'edit' ? '✏️' : '✓'));
           showToast(result.message || 'Action executed!', toastIcon);
+          if (islandTranscript) islandTranscript.textContent = `✓ ${result.message || 'Executed'}`;
+
           if ('speechSynthesis' in window && result.speech) {
             try {
               window.speechSynthesis.cancel();
@@ -2393,6 +5193,7 @@
           }
         } else {
           showToast(result.message || 'Command not understood', '⚠️', true);
+          if (islandTranscript) islandTranscript.textContent = `⚠️ ${result.message || 'Not understood'}`;
         }
 
         // Dynamically update shortcuts deck if created, edited, or deleted on the go
@@ -2404,28 +5205,93 @@
           renderShortcuts(currentShortcuts);
         }
 
+        if (result.intent === 'note') {
+          if (typeof loadNotes === 'function') loadNotes();
+          if (typeof addPetXp === 'function') addPetXp(10);
+          if (typeof setPetMood === 'function') setPetMood('happy', 'Note captured! 📝');
+        } else if (result.intent === 'ask_pet') {
+          if (typeof setPetMood === 'function') setPetMood('happy', result.message);
+        }
+
         if (result.audio_state) {
           renderFullState(result.audio_state);
         } else {
           syncState();
         }
+
+        // Keep island expanded briefly to display result, then smoothly collapse
+        clearTimeout(islandCollapseTimer);
+        islandCollapseTimer = setTimeout(() => {
+          collapseIsland();
+        }, 2500);
+
       } catch (e) {
         showToast('Failed to contact NLP Agent', '✕', true);
+        if (islandTranscript) islandTranscript.textContent = '✕ Error contacting NLP';
+        clearTimeout(islandCollapseTimer);
+        islandCollapseTimer = setTimeout(collapseIsland, 2000);
       }
     }
 
-    if (voiceBtn) {
-      voiceBtn.addEventListener('click', () => {
+    // Quick Command Execution
+    if (islandCmdSubmit && islandCmdInput) {
+      const handleCmdSubmit = () => {
+        const cmd = islandCmdInput.value.trim();
+        if (cmd) {
+          processNlpCommand(cmd);
+          islandCmdInput.value = '';
+        }
+      };
+      islandCmdSubmit.addEventListener('click', handleCmdSubmit);
+      islandCmdInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleCmdSubmit();
+      });
+    }
+
+    islandQuickChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const cmd = chip.getAttribute('data-cmd');
+        if (cmd) {
+          if (islandCmdInput) islandCmdInput.value = cmd;
+          processNlpCommand(cmd);
+        }
+      });
+    });
+
+    if (islandAiBtn) {
+      islandAiBtn.addEventListener('click', () => {
+        if (dynamicIsland?.classList.contains('expanded')) {
+          collapseIsland();
+        } else {
+          startListening();
+        }
+      });
+    }
+
+    if (islandMicToggleBtn) {
+      islandMicToggleBtn.addEventListener('click', () => {
         if (isListening) stopListening();
         else startListening();
       });
     }
 
-    if (voiceStopBtn) {
-      voiceStopBtn.addEventListener('click', stopListening);
+    if (islandCancelBtn) {
+      islandCancelBtn.addEventListener('click', collapseIsland);
     }
 
     initVoice();
+
+    // Sync physical mic status on load
+    async function syncMicState() {
+      try {
+        const res = await fetch('/api/mic');
+        if (res.ok) {
+          const data = await res.json();
+          updateMicUI(data.muted, data.available);
+        }
+      } catch (e) {}
+    }
+    syncMicState();
 
     // -----------------------------------------------------------
     // QR Code & Install Modals
@@ -2556,12 +5422,15 @@
     }
 
     // -----------------------------------------------------------
-    // 5-Minute Silent Inactivity Sleep & Transparent Instant Wake-up
+    // 5-Minute Inactivity Watchdog & Standby Mode Integration
+    // (In standby mode, server communication throttles to once per minute)
     // -----------------------------------------------------------
     const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes (300,000 ms)
     let lastActivityTimestamp = Date.now();
     isSleeping = false;
     let syncPollingTimer = null;
+    let telemetryPollingTimer = null;
+    let standbySyncTimer = null;
 
     function startPolling() {
       if (syncPollingTimer) clearInterval(syncPollingTimer);
@@ -2575,52 +5444,1521 @@
       }
     }
 
-    function enterSilentSleep() {
-      if (isSleeping) return;
-      isSleeping = true;
-      stopPolling();
-      if (isListening) stopListening();
-      // Keep UI steady, calm and frozen in its current state.
-      // Absolutely NO offline banners, toasts, or disconnection alerts.
+    function startTelemetryPolling() {
+      if (telemetryPollingTimer) clearInterval(telemetryPollingTimer);
+      telemetryPollingTimer = setInterval(pollTelemetry, 3500);
     }
 
-    function wakeUpSilently() {
-      lastActivityTimestamp = Date.now();
-      if (!isSleeping) return;
-      isSleeping = false;
-      // Silently restore polling and immediately refresh latest volume & app states
-      startPolling();
-      syncState();
-    }
-
-    function registerUserActivity() {
-      if (isSleeping) {
-        wakeUpSilently();
-      } else {
-        lastActivityTimestamp = Date.now();
+    function stopTelemetryPolling() {
+      if (telemetryPollingTimer) {
+        clearInterval(telemetryPollingTimer);
+        telemetryPollingTimer = null;
       }
     }
 
-    // Passive listeners for all user interactions (touch, pointer, mouse, key, scroll)
+    function registerUserActivity() {
+      lastActivityTimestamp = Date.now();
+      // Keep inactivity watchdog timer refreshed.
+      // Standby HUD wake is decoupled from passive micro-pointer moves or raw touchstarts
+      // and handled strictly by handleStandbyWake and keydown with full double-click suppression.
+    }
+
+    // Passive listeners for user interactions (touch, pointer, mouse, key)
     const activityEvents = [
-      'touchstart', 'touchend', 'touchmove',
-      'pointerdown', 'pointerup', 'pointermove',
-      'mousedown', 'mouseup', 'mousemove', 'click',
-      'keydown', 'wheel', 'scroll'
+      'touchstart', 'touchmove',
+      'pointerdown', 'pointermove',
+      'mousedown', 'keydown'
     ];
     activityEvents.forEach((evt) => {
       window.addEventListener(evt, registerUserActivity, { passive: true, capture: true });
     });
 
-    // Inactivity Watchdog: Checks every 5 seconds
+    // Inactivity Watchdog: Automatically enters Standby Mode after 5 minutes of silence
     setInterval(() => {
-      if (!isSleeping && (Date.now() - lastActivityTimestamp >= INACTIVITY_TIMEOUT_MS)) {
-        enterSilentSleep();
+      if (!isStandbyOpen && !isSleeping && (Date.now() - lastActivityTimestamp >= INACTIVITY_TIMEOUT_MS)) {
+        enterStandbyMode();
       }
     }, 5000);
 
+    // ===========================================================
+    // 1. Dynamic Roaming Pixel Pet Engine ("Byte")
+    // ===========================================================
+    const PET_DATA_KEY = 'volume_mixer_pet_data';
+    const PET_POS_KEY = 'volume_mixer_pet_pos';
+
+    const petHabitat = document.getElementById('pet-habitat');
+    const petLevelBadge = document.getElementById('pet-level-badge');
+    const petXpFill = document.getElementById('pet-xp-fill');
+
+    const roamingPet = document.getElementById('roaming-pet');
+    const roamingPetWrap = document.getElementById('roaming-pet-wrap');
+    const roamingPetHearts = document.getElementById('roaming-pet-hearts');
+    const roamingPetZzz = document.getElementById('roaming-pet-zzz');
+    const roamingPetBall = document.getElementById('roaming-pet-ball');
+    const roamingEyesOpen = document.getElementById('roaming-eyes-open');
+    const roamingEyesClosed = document.getElementById('roaming-eyes-closed');
+
+    const roamingAccCoding = document.getElementById('roaming-acc-coding');
+    const roamingAccMusic = document.getElementById('roaming-acc-music');
+    const roamingAccMeeting = document.getElementById('roaming-acc-meeting');
+    const roamingAccSleep = document.getElementById('roaming-acc-sleep');
+    const roamingAccSweat = document.getElementById('roaming-acc-sweat');
+
+    let petData = {
+      name: "Byte",
+      level: 1,
+      xp: 25,
+      maxXp: 100
+    };
+    let petMood = 'idle';
+    let petX = 0;
+    let petY = 0;
+    let isDraggingPet = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let petInitialX = 0;
+    let petInitialY = 0;
+    let hasDragged = false;
+    let lastUserActivity = Date.now();
+    let isPetSleeping = false;
+    let roamInterval = null;
+
+    function loadPetData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PET_DATA_KEY));
+        if (saved && typeof saved.level === 'number') {
+          petData = saved;
+        }
+      } catch (e) {}
+      updatePetUI();
+    }
+
+    function savePetData() {
+      try {
+        localStorage.setItem(PET_DATA_KEY, JSON.stringify(petData));
+      } catch (e) {}
+    }
+
+    function updatePetUI() {
+      if (petLevelBadge) petLevelBadge.textContent = `Lv. ${petData.level}`;
+      if (petXpFill) {
+        const pct = Math.min(100, Math.max(5, (petData.xp / petData.maxXp) * 100));
+        petXpFill.style.width = `${pct}%`;
+      }
+    }
+
+    function addPetXp(amount) {
+      petData.xp += amount;
+      if (petData.xp >= petData.maxXp) {
+        petData.level += 1;
+        petData.xp = petData.xp - petData.maxXp;
+        petData.maxXp = Math.floor(petData.maxXp * 1.5);
+        showToast(`🎉 Byte leveled up to Level ${petData.level}! ⭐`, '🌟');
+        haptic([40, 60, 40]);
+        setPetMood('happy');
+      }
+      savePetData();
+      updatePetUI();
+    }
+
+    function loadSavedPetPosition() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PET_POS_KEY));
+        if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+          const maxX = Math.max(20, window.innerWidth - 65);
+          const maxY = Math.max(20, window.innerHeight - 80);
+          petX = Math.max(10, Math.min(maxX, saved.x));
+          petY = Math.max(10, Math.min(maxY, saved.y));
+          return;
+        }
+      } catch (e) {}
+      // Default initial location: comfortable bottom right
+      petX = Math.max(16, window.innerWidth - 75);
+      petY = Math.max(16, window.innerHeight - 110);
+    }
+
+    function savePetPosition() {
+      try {
+        localStorage.setItem(PET_POS_KEY, JSON.stringify({ x: petX, y: petY }));
+      } catch (e) {}
+    }
+
+    function setPetMood(mood) {
+      petMood = mood;
+      const isCoding = mood === 'coding';
+      const isMusic = mood === 'music';
+      const isMeeting = mood === 'meeting';
+      const isSleeping = mood === 'sleeping';
+      const isSweat = mood === 'sweat';
+
+      if (roamingAccCoding) roamingAccCoding.style.display = isCoding ? 'block' : 'none';
+      if (roamingAccMusic) roamingAccMusic.style.display = isMusic ? 'block' : 'none';
+      if (roamingAccMeeting) roamingAccMeeting.style.display = isMeeting ? 'block' : 'none';
+      if (roamingAccSleep) roamingAccSleep.style.display = isSleeping ? 'block' : 'none';
+      if (roamingAccSweat) roamingAccSweat.style.display = isSweat ? 'block' : 'none';
+
+      if (roamingEyesOpen) roamingEyesOpen.style.display = isSleeping ? 'none' : 'block';
+      if (roamingEyesClosed) roamingEyesClosed.style.display = isSleeping ? 'block' : 'none';
+      if (roamingPetZzz) roamingPetZzz.style.display = isSleeping ? 'flex' : 'none';
+
+      if (roamingPet) {
+        roamingPet.classList.remove('is-sleeping', 'is-happy');
+        if (isSleeping) {
+          roamingPet.classList.add('is-sleeping');
+        } else if (mood === 'happy') {
+          roamingPet.classList.add('is-happy');
+          setTimeout(() => roamingPet?.classList.remove('is-happy'), 600);
+        } else {
+          roamingPet.classList.add('is-idle');
+        }
+      }
+    }
+
+    function petByte() {
+      haptic(35);
+      const heart = document.createElement('span');
+      heart.className = 'heart-particle';
+      heart.textContent = '❤️';
+      if (roamingPetHearts) {
+        roamingPetHearts.appendChild(heart);
+        setTimeout(() => heart.remove(), 1000);
+      }
+      addPetXp(5);
+      setPetMood('happy');
+      // Remains firmly in current location
+      savePetPosition();
+    }
+
+    function initRoamingPet() {
+      if (!roamingPet) return;
+      loadSavedPetPosition();
+      roamingPet.style.transition = 'none';
+      roamingPet.style.transform = `translate3d(${petX}px, ${petY}px, 0)`;
+      roamingPet.classList.add('is-idle');
+
+      // Unified HTML5 Pointer Events (Smooth 60/120fps dragging with Pointer Capture)
+      roamingPet.addEventListener('pointerdown', (e) => {
+        isDraggingPet = true;
+        hasDragged = false;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        petInitialX = petX;
+        petInitialY = petY;
+        roamingPet.style.transition = 'none';
+        roamingPet.classList.add('is-dragging');
+        try {
+          roamingPet.setPointerCapture(e.pointerId);
+        } catch (err) {}
+        e.preventDefault();
+      });
+
+      roamingPet.addEventListener('pointermove', (e) => {
+        lastUserActivity = Date.now();
+        if (isPetSleeping) wakeUpPet();
+        if (!isDraggingPet) return;
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        if (Math.hypot(dx, dy) > 4) hasDragged = true;
+        const maxX = Math.max(8, window.innerWidth - 52);
+        const maxY = Math.max(8, window.innerHeight - 52);
+        petX = Math.max(8, Math.min(maxX, petInitialX + dx));
+        petY = Math.max(8, Math.min(maxY, petInitialY + dy));
+        roamingPet.style.transform = `translate3d(${petX}px, ${petY}px, 0)`;
+      });
+
+      const handlePetPointerEnd = (e) => {
+        if (!isDraggingPet) return;
+        isDraggingPet = false;
+        roamingPet.classList.remove('is-dragging');
+        try {
+          if (roamingPet.hasPointerCapture(e.pointerId)) {
+            roamingPet.releasePointerCapture(e.pointerId);
+          }
+        } catch (err) {}
+        savePetPosition();
+        if (!hasDragged) {
+          petByte();
+        } else {
+          addPetXp(2);
+          setPetMood('happy');
+          setTimeout(() => setPetMood(isPomoRunning ? 'coding' : 'idle'), 1200);
+        }
+      };
+
+      roamingPet.addEventListener('pointerup', handlePetPointerEnd);
+      roamingPet.addEventListener('pointercancel', handlePetPointerEnd);
+
+      // Habitat badge in cockpit bar: tapping triggers a happy bounce at current location
+      if (petHabitat) {
+        petHabitat.addEventListener('click', () => {
+          haptic(35);
+          petByte();
+        });
+      }
+
+      startWanderEngine();
+    }
+
+    function wakeUpPet() {
+      if (!isPetSleeping) return;
+      isPetSleeping = false;
+      setPetMood(isPomoRunning ? 'coding' : 'idle');
+    }
+
+    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel'].forEach(evt => {
+      window.addEventListener(evt, () => {
+        lastUserActivity = Date.now();
+        if (isPetSleeping) wakeUpPet();
+      }, { passive: true });
+    });
+
+    function startWanderEngine() {
+      clearInterval(roamInterval);
+      roamInterval = setInterval(() => {
+        if (isDraggingPet || isStandbyOpen) return;
+
+        // Auto-sleep after 2.5 minutes of inactivity
+        if (Date.now() - lastUserActivity > 150000 && !isPomoRunning) {
+          if (!isPetSleeping) {
+            isPetSleeping = true;
+            setPetMood('sleeping');
+          }
+          return;
+        }
+
+        // Random play with ball
+        if (Math.random() < 0.25 && !isPetSleeping) {
+          playBall();
+          return;
+        }
+
+        roamToNewTarget();
+      }, 12000);
+    }
+
+    function playBall() {
+      if (!roamingPetBall) return;
+      roamingPetBall.style.display = 'block';
+      setTimeout(() => {
+        if (roamingPetBall) roamingPetBall.style.display = 'none';
+        addPetXp(5);
+      }, 2500);
+    }
+
+    function roamToNewTarget() {
+      if (!roamingPet || isDraggingPet || isPetSleeping) return;
+
+      const pad = 30;
+      const maxX = window.innerWidth - 60;
+      const maxY = window.innerHeight - 90;
+
+      const pick = Math.floor(Math.random() * 3);
+      let targetX = Math.floor(pad + Math.random() * (maxX - pad));
+      let targetY = Math.floor(pad + Math.random() * (maxY - pad));
+
+      if (pick === 0) {
+        const island = document.getElementById('dynamic-island-wrap');
+        if (island) {
+          const rect = island.getBoundingClientRect();
+          targetX = Math.max(10, Math.min(maxX, rect.left + rect.width / 2 - 20));
+          targetY = Math.max(10, rect.top - 46);
+        }
+      } else if (pick === 1) {
+        const master = document.getElementById('master-tile');
+        if (master) {
+          const rect = master.getBoundingClientRect();
+          targetX = Math.max(10, Math.min(maxX, rect.right - 60));
+          targetY = Math.max(10, rect.bottom + 6);
+        }
+      }
+
+      const dx = targetX - petX;
+      petX = targetX;
+      petY = targetY;
+      savePetPosition();
+
+      roamingPet.classList.remove('is-idle', 'is-walking-left', 'is-walking-right');
+      if (dx < 0) {
+        roamingPet.classList.add('is-walking-left');
+      } else {
+        roamingPet.classList.add('is-walking-right');
+      }
+
+      roamingPet.style.transition = 'transform 2.2s cubic-bezier(0.25, 1, 0.5, 1)';
+      roamingPet.style.transform = `translate3d(${petX}px, ${petY}px, 0)`;
+
+      setTimeout(() => {
+        roamingPet?.classList.remove('is-walking-left', 'is-walking-right');
+        if (!isPetSleeping) roamingPet?.classList.add('is-idle');
+      }, 2250);
+    }
+
+    // ===========================================================
+    // 2. Desk Pomodoro Focus Timer Controller (Dynamic Island)
+    // ===========================================================
+    const pomodoroModal = document.getElementById('pomodoro-modal');
+    const pomoModalClose = document.getElementById('pomo-modal-close');
+    const islandPomoBtn = document.getElementById('island-pomo-btn');
+    const islandPomoClock = document.getElementById('island-pomo-clock');
+
+    const pomoTimeDisplay = document.getElementById('pomo-time-display');
+    const pomoStateLabel = document.getElementById('pomo-state-label');
+    const pomoProgressRing = document.getElementById('pomo-progress-ring');
+    const pomoToggleBtn = document.getElementById('pomo-toggle-btn');
+    const pomoResetBtn = document.getElementById('pomo-reset-btn');
+
+    const pomoTabFocus = document.getElementById('pomo-tab-focus');
+    const pomoTabShort = document.getElementById('pomo-tab-short');
+    const pomoTabLong = document.getElementById('pomo-tab-long');
+
+    let pomoDuration = 25 * 60;
+    let pomoRemaining = 25 * 60;
+    let pomoTimer = null;
+    let isPomoRunning = false;
+    let pomoCurrentMode = 'focus';
+    const FULL_DASH_ARRAY = 264;
+
+    function openPomodoroModal() {
+      pomodoroModal?.classList.add('open');
+    }
+
+    function setPomodoroMode(mode) {
+      pomoCurrentMode = mode;
+      clearInterval(pomoTimer);
+      isPomoRunning = false;
+      if (pomoToggleBtn) pomoToggleBtn.textContent = '▶ Start Focus';
+      if (islandPomoBtn) islandPomoBtn.classList.remove('running');
+
+      [pomoTabFocus, pomoTabShort, pomoTabLong].forEach(t => t?.classList.remove('active'));
+
+      if (mode === 'focus') {
+        pomoDuration = 25 * 60;
+        pomoTabFocus?.classList.add('active');
+        if (pomoStateLabel) pomoStateLabel.textContent = 'Deep Work';
+        setPetMood('coding');
+      } else if (mode === 'short') {
+        pomoDuration = 5 * 60;
+        pomoTabShort?.classList.add('active');
+        if (pomoStateLabel) pomoStateLabel.textContent = 'Short Break';
+        setPetMood('idle');
+      } else if (mode === 'long') {
+        pomoDuration = 15 * 60;
+        pomoTabLong?.classList.add('active');
+        if (pomoStateLabel) pomoStateLabel.textContent = 'Long Break';
+        setPetMood('sleeping');
+      }
+
+      pomoRemaining = pomoDuration;
+      updatePomodoroDisplay();
+    }
+
+    function updatePomodoroDisplay() {
+      const mins = Math.floor(pomoRemaining / 60);
+      const secs = pomoRemaining % 60;
+      const str = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (pomoTimeDisplay) pomoTimeDisplay.textContent = str;
+      if (islandPomoClock) islandPomoClock.textContent = str;
+
+      if (pomoProgressRing) {
+        const offset = FULL_DASH_ARRAY * (1 - (pomoRemaining / pomoDuration));
+        pomoProgressRing.style.strokeDashoffset = offset;
+      }
+    }
+
+    function startPomodoroTimer() {
+      if (isPomoRunning) return;
+      isPomoRunning = true;
+      if (pomoToggleBtn) pomoToggleBtn.textContent = '⏸ Pause';
+      if (islandPomoBtn) islandPomoBtn.classList.add('running');
+      if (pomoCurrentMode === 'focus') setPetMood('coding');
+
+      pomoTimer = setInterval(() => {
+        if (pomoRemaining > 0) {
+          pomoRemaining--;
+          updatePomodoroDisplay();
+        } else {
+          clearInterval(pomoTimer);
+          isPomoRunning = false;
+          if (pomoToggleBtn) pomoToggleBtn.textContent = '▶ Start Focus';
+          if (islandPomoBtn) islandPomoBtn.classList.remove('running');
+          haptic([60, 100, 60, 100]);
+          if (pomoCurrentMode === 'focus') {
+            addPetXp(50);
+            showToast('🎉 Focus complete! +50 XP awarded to Byte!', '⭐');
+            setPetMood('happy');
+          } else {
+            showToast('Break finished! Ready for next session?', '☕');
+            setPetMood('idle');
+          }
+        }
+      }, 1000);
+    }
+
+    function pausePomodoroTimer() {
+      clearInterval(pomoTimer);
+      isPomoRunning = false;
+      if (pomoToggleBtn) pomoToggleBtn.textContent = '▶ Resume';
+      if (islandPomoBtn) islandPomoBtn.classList.remove('running');
+    }
+
+    if (islandPomoBtn) {
+      let pomoPressTimer = null;
+      let pomoLongPressed = false;
+
+      islandPomoBtn.addEventListener('pointerdown', () => {
+        pomoLongPressed = false;
+        pomoPressTimer = setTimeout(() => {
+          pomoLongPressed = true;
+          haptic(45);
+          openPomodoroModal();
+        }, 450);
+      });
+
+      islandPomoBtn.addEventListener('pointerup', () => {
+        if (pomoPressTimer) {
+          clearTimeout(pomoPressTimer);
+          pomoPressTimer = null;
+        }
+      });
+
+      islandPomoBtn.addEventListener('pointercancel', () => {
+        if (pomoPressTimer) {
+          clearTimeout(pomoPressTimer);
+          pomoPressTimer = null;
+        }
+      });
+
+      islandPomoBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (pomoLongPressed) {
+          pomoLongPressed = false;
+          return;
+        }
+        haptic(35);
+        if (isPomoRunning) {
+          pausePomodoroTimer();
+          showToast('Pomodoro Paused ⏸️', '⏱️');
+        } else {
+          startPomodoroTimer();
+          showToast('Pomodoro Started! 🚀', '⏱️');
+        }
+      });
+    }
+
+    if (pomoToggleBtn) {
+      pomoToggleBtn.addEventListener('click', () => {
+        haptic(35);
+        if (isPomoRunning) pausePomodoroTimer();
+        else startPomodoroTimer();
+      });
+    }
+
+    if (pomoResetBtn) {
+      pomoResetBtn.addEventListener('click', () => {
+        haptic(30);
+        setPomodoroMode(pomoCurrentMode);
+      });
+    }
+
+    if (pomoTabFocus) pomoTabFocus.addEventListener('click', () => setPomodoroMode('focus'));
+    if (pomoTabShort) pomoTabShort.addEventListener('click', () => setPomodoroMode('short'));
+    if (pomoTabLong) pomoTabLong.addEventListener('click', () => setPomodoroMode('long'));
+
+    if (pomoModalClose) pomoModalClose.addEventListener('click', () => pomodoroModal?.classList.remove('open'));
+    pomodoroModal?.addEventListener('click', (e) => {
+      if (e.target === pomodoroModal) pomodoroModal.classList.remove('open');
+    });
+
+    // ===========================================================
+    // 3. System Hardware Telemetry & Granular Utilities Modal
+    // ===========================================================
+    const telemCpuStat = document.getElementById('telem-cpu-stat');
+    const telemGpuStat = document.getElementById('telem-gpu-stat');
+    const telemRamStat = document.getElementById('telem-ram-stat');
+    const telemPingStat = document.getElementById('telem-ping-stat');
+    const openTelemBtn = document.getElementById('open-telem-btn');
+
+    // Main HUD Ports Menu Elements
+    const openPortsBtn = document.getElementById('open-ports-btn');
+    const cockpitPortsBadge = document.getElementById('cockpit-ports-badge');
+    const portsModal = document.getElementById('ports-modal');
+    const portsModalClose = document.getElementById('ports-modal-close');
+    const refreshPortsBtn = document.getElementById('refresh-ports-btn');
+    const portsModalCount = document.getElementById('ports-modal-count');
+    const portsQuickInput = document.getElementById('ports-quick-input');
+    const portsQuickKillBtn = document.getElementById('ports-quick-kill-btn');
+    const hudPortsCardsList = document.getElementById('hud-ports-cards-list');
+    const portsScanStatus = document.getElementById('ports-scan-status');
+
+    const telemetryModal = document.getElementById('telemetry-modal');
+    const telemModalClose = document.getElementById('telem-modal-close');
+    const tdCpuVal = document.getElementById('td-cpu-val');
+    const tdGpuVal = document.getElementById('td-gpu-val');
+    const tdGpuTemp = document.getElementById('td-gpu-temp');
+    const tdRamVal = document.getElementById('td-ram-val');
+    const tdRamUsed = document.getElementById('td-ram-used');
+    const tdPingVal = document.getElementById('td-ping-val');
+    const cleanRamBtn = document.getElementById('clean-ram-btn');
+    const customPortInput = document.getElementById('custom-port-input');
+    const customPortKillBtn = document.getElementById('custom-port-kill-btn');
+    const activePortsList = document.getElementById('active-ports-list');
+    const portChips = document.querySelectorAll('.port-chip');
+
+    let latestTelemetry = null;
+
+    async function pollTelemetry() {
+      try {
+        const res = await fetch('/api/system/telemetry');
+        if (res.ok) {
+          const data = await res.json();
+          latestTelemetry = data;
+
+          if (telemCpuStat) telemCpuStat.textContent = `${data.cpu_percent}%`;
+          if (telemRamStat) telemRamStat.textContent = `${data.ram_percent}%`;
+          if (data.gpu && telemGpuStat) {
+            telemGpuStat.textContent = `${data.gpu.utilization}%`;
+          }
+          if (data.network && telemPingStat) {
+            telemPingStat.textContent = `${data.network.ping_ms}ms`;
+          }
+
+          const portCount = data.ports_meta ? data.ports_meta.length : (data.listening_ports ? data.listening_ports.length : 0);
+          if (cockpitPortsBadge) cockpitPortsBadge.textContent = portCount;
+
+          const isOverloaded = data.cpu_percent >= 80 || data.ram_percent >= 88;
+          if (openTelemBtn) {
+            openTelemBtn.style.borderColor = isOverloaded ? 'rgba(239, 68, 68, 0.5)' : 'var(--card-border)';
+            openTelemBtn.style.background = isOverloaded ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)';
+          }
+          if (isOverloaded && petMood !== 'coding' && petMood !== 'meeting') {
+            setPetMood('sweat');
+          } else if (!isOverloaded && petMood === 'sweat') {
+            setPetMood('idle');
+          }
+
+          if (telemetryModal && telemetryModal.classList.contains('open')) {
+            updateTelemetryModalUI(data);
+          }
+
+          if (portsModal && portsModal.classList.contains('open') && data.ports_meta) {
+            updatePortsTriageStats(data);
+            renderPortsCards(data.ports_meta);
+          }
+
+          if (isStandbyOpen) {
+            updateStandbyHUDUI(data);
+          }
+        }
+      } catch (e) {}
+    }
+
+    let currentPortsList = [];
+    let currentPortsFilter = 'all';
+    let portsSearchQuery = '';
+
+    const portsStatSuspicious = document.getElementById('ports-stat-suspicious');
+    const portsStatExposed = document.getElementById('ports-stat-exposed');
+    const portsStatSafe = document.getElementById('ports-stat-safe');
+    const portsStatSystem = document.getElementById('ports-stat-system');
+    const portsSearchFilter = document.getElementById('ports-search-filter');
+    const countPortsAll = document.getElementById('count-ports-all');
+    const countPortsSuspicious = document.getElementById('count-ports-suspicious');
+    const countPortsExposed = document.getElementById('count-ports-exposed');
+    const countPortsSafe = document.getElementById('count-ports-safe');
+    const countPortsSystem = document.getElementById('count-ports-system');
+    const portsSectionHeading = document.getElementById('ports-section-heading');
+
+    async function fetchAndRenderPorts() {
+      if (portsScanStatus) portsScanStatus.textContent = 'Scanning...';
+      try {
+        const res = await fetch('/api/system/ports');
+        if (res.ok) {
+          const data = await res.json();
+          currentPortsList = data.ports || [];
+          if (cockpitPortsBadge) cockpitPortsBadge.textContent = currentPortsList.length;
+          if (portsModalCount) portsModalCount.textContent = `${currentPortsList.length} Open`;
+          if (portsScanStatus) {
+            portsScanStatus.textContent = `Live • ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'})}`;
+          }
+          updatePortsTriageStats(data);
+          renderPortsCards();
+        } else {
+          if (portsScanStatus) portsScanStatus.textContent = 'Scan failed';
+        }
+      } catch (e) {
+        if (portsScanStatus) portsScanStatus.textContent = 'Scan failed';
+      }
+    }
+
+    function updatePortsTriageStats(data) {
+      const suspiciousCount = data.suspicious_count ?? currentPortsList.filter(p => p.security_level === 'suspicious').length;
+      const exposedCount = data.exposed_count ?? currentPortsList.filter(p => p.security_level === 'exposed').length;
+      const safeCount = data.safe_count ?? currentPortsList.filter(p => p.security_level === 'safe').length;
+      const systemCount = data.system_count ?? currentPortsList.filter(p => p.security_level === 'system').length;
+
+      if (portsStatSuspicious) portsStatSuspicious.textContent = `${suspiciousCount} Suspicious`;
+      if (portsStatExposed) portsStatExposed.textContent = `${exposedCount} LAN Exposed`;
+      if (portsStatSafe) portsStatSafe.textContent = `${safeCount} Safe Local`;
+      if (portsStatSystem) portsStatSystem.textContent = `${systemCount} System`;
+
+      if (countPortsAll) countPortsAll.textContent = currentPortsList.length;
+      if (countPortsSuspicious) countPortsSuspicious.textContent = suspiciousCount;
+      if (countPortsExposed) countPortsExposed.textContent = exposedCount;
+      if (countPortsSafe) countPortsSafe.textContent = safeCount;
+      if (countPortsSystem) countPortsSystem.textContent = systemCount;
+    }
+
+    function renderPortsCards(portsOverride) {
+      if (portsOverride) {
+        currentPortsList = portsOverride;
+      }
+      if (portsModalCount) portsModalCount.textContent = `${currentPortsList.length} Open`;
+      if (!hudPortsCardsList) return;
+
+      // Filter ports according to active pill and search query
+      let filtered = currentPortsList;
+      if (currentPortsFilter !== 'all') {
+        filtered = filtered.filter(p => p.security_level === currentPortsFilter);
+      }
+
+      if (portsSearchQuery) {
+        const q = portsSearchQuery.toLowerCase();
+        filtered = filtered.filter(p => 
+          String(p.port).includes(q) ||
+          String(p.pid).includes(q) ||
+          (p.process_name || '').toLowerCase().includes(q) ||
+          (p.service_tag || '').toLowerCase().includes(q) ||
+          (p.security_reason || '').toLowerCase().includes(q) ||
+          (p.process_path || '').toLowerCase().includes(q) ||
+          (p.local_address || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (portsSectionHeading) {
+        const filterLabel = currentPortsFilter === 'all' ? 'ACTIVE' : currentPortsFilter.toUpperCase();
+        portsSectionHeading.textContent = `${filterLabel} PORTS (${filtered.length} OF ${currentPortsList.length})`;
+      }
+
+      if (filtered.length === 0) {
+        if (currentPortsList.length === 0) {
+          hudPortsCardsList.innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 22px; text-align: center;">
+              <div style="font-size: 1.6rem; margin-bottom: 6px;">🟢</div>
+              <div style="font-size: 0.88rem; font-weight: 700; color: #34d399;">All Ports Idle & Clean</div>
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">No active development servers, listening sockets, or suspicious listeners found.</div>
+            </div>
+          `;
+        } else if (currentPortsFilter === 'suspicious') {
+          hudPortsCardsList.innerHTML = `
+            <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 1.5rem; margin-bottom: 4px;">🛡️</div>
+              <div style="font-size: 0.85rem; font-weight: 800; color: #34d399;">0 Suspicious Ports Detected</div>
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">No trojan listeners, malware ports, unisolated Redis, or temp-path sockets active.</div>
+            </div>
+          `;
+        } else {
+          hudPortsCardsList.innerHTML = `
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 1.3rem; margin-bottom: 4px;">🔍</div>
+              <div style="font-size: 0.82rem; font-weight: 700; color: #cbd5e1;">No matching ports found</div>
+              <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">Try clearing your search query or switching filter tabs.</div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      hudPortsCardsList.innerHTML = '';
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        const secLevel = p.security_level || 'safe';
+        const isSuspicious = secLevel === 'suspicious';
+        const isExposed = secLevel === 'exposed';
+        const isSystem = secLevel === 'system';
+
+        card.className = `port-meta-card sec-${secLevel}`;
+        
+        let icon = '⚙️';
+        const pname = (p.process_name || '').toLowerCase();
+        if (pname.includes('python')) icon = '🐍';
+        else if (pname.includes('node') || pname.includes('npm')) icon = '🟩';
+        else if (pname.includes('code')) icon = '💻';
+        else if (pname.includes('chrome') || pname.includes('edge')) icon = '🌐';
+        else if (pname.includes('discord')) icon = '💬';
+        else if (pname.includes('redis')) icon = '🟥';
+        else if (pname.includes('mongo')) icon = '🍃';
+        else if (pname.includes('postgres') || pname.includes('mysql')) icon = '🐬';
+        else if (isSuspicious) icon = '⚠️';
+
+        const scopeTagClass = isExposed ? 'scope-lan' : 'scope-local';
+        const scopeText = p.bind_scope || (p.local_address && p.local_address.startsWith('0.0.0.0') ? 'LAN / Public (0.0.0.0)' : 'Localhost (127.0.0.1)');
+
+        card.innerHTML = `
+          <div class="port-card-top-row">
+            <div class="port-card-ident">
+              <div class="port-num-badge sec-${secLevel}">:${p.port}</div>
+              <div class="port-info-block">
+                <div class="port-proc-name">
+                  <span>${icon} ${p.process_name || 'Process'}</span>
+                  <span class="port-service-tag">${p.service_tag || 'TCP Service'}</span>
+                  <span class="port-sec-badge sec-${secLevel}">${p.security_badge || secLevel.toUpperCase()}</span>
+                </div>
+                <div class="port-meta-sub">
+                  PID: <b>${p.pid}</b> &bull; ${p.protocol || 'TCP'} &bull; <code>${p.local_address || '0.0.0.0:' + p.port}</code> &bull; <span class="port-scope-tag ${scopeTagClass}">${scopeText}</span>
+                </div>
+              </div>
+            </div>
+            <div class="port-card-action">
+              ${p.can_kill ? `
+                <button class="port-kill-action-btn ${isSuspicious ? 'is-suspicious' : ''}" title="Terminate process ${p.process_name} (PID ${p.pid}) on port ${p.port}" data-port="${p.port}">
+                  ${isSuspicious ? '🚨 Terminate' : '✕ Close'}
+                </button>
+              ` : `
+                <span class="port-system-badge" title="Protected Windows Core Operating System service. Termination disabled.">🔒 System Core</span>
+              `}
+            </div>
+          </div>
+
+          ${p.security_reason ? `
+            <div class="port-sec-reason-box sec-${secLevel}">
+              <span style="font-size: 0.8rem; flex-shrink: 0;">${isSuspicious ? '🚨' : isExposed ? '⚠️' : isSystem ? '🛡️' : '🟢'}</span>
+              <span><b>${isSuspicious ? 'Security Alert:' : isExposed ? 'LAN Exposure:' : isSystem ? 'System Service:' : 'Audit Note:'}</b> ${p.security_reason}</span>
+            </div>
+          ` : ''}
+
+          ${p.process_path ? `
+            <div class="port-path-text" title="${p.process_path}">
+              📁 ${p.process_path}
+            </div>
+          ` : ''}
+        `;
+
+        const killBtn = card.querySelector('.port-kill-action-btn');
+        if (killBtn) {
+          killBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await killPortWithFeedback(p.port, p.process_name, p.pid);
+          });
+        }
+
+        hudPortsCardsList.appendChild(card);
+      });
+    }
+
+    // Set up Ports Filter Pills
+    document.querySelectorAll('.ports-filter-pill').forEach(pill => {
+      pill.addEventListener('click', (e) => {
+        document.querySelectorAll('.ports-filter-pill').forEach(b => b.classList.remove('active'));
+        pill.classList.add('active');
+        currentPortsFilter = pill.dataset.filter || 'all';
+        renderPortsCards();
+      });
+    });
+
+    // Set up Triage summary boxes as instant filters
+    document.querySelectorAll('.ports-triage-item').forEach(box => {
+      box.addEventListener('click', (e) => {
+        const filter = box.dataset.filter;
+        if (filter) {
+          document.querySelectorAll('.ports-filter-pill').forEach(b => {
+            b.classList.toggle('active', b.dataset.filter === filter);
+          });
+          currentPortsFilter = filter;
+          renderPortsCards();
+        }
+      });
+    });
+
+    // Search filter input listener
+    if (portsSearchFilter) {
+      portsSearchFilter.addEventListener('input', (e) => {
+        portsSearchQuery = e.target.value.trim();
+        renderPortsCards();
+      });
+    }
+
+    async function killPortWithFeedback(port, procName, pid) {
+      haptic(45);
+      try {
+        const res = await fetch('/api/system/kill-port', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ port: parseInt(port) })
+        });
+        const data = await res.json();
+        const msg = data.message || `Closed port :${port}`;
+        showToast(msg, '🚫');
+        addPetXp(12);
+        fetchAndRenderPorts();
+        pollTelemetry();
+      } catch (e) {
+        showToast(`Failed to close port :${port}`, '✕', true);
+      }
+    }
+
+    function updateTelemetryModalUI(data) {
+      if (tdCpuVal) tdCpuVal.textContent = `${data.cpu_percent}%`;
+      if (tdGpuVal && data.gpu) tdGpuVal.textContent = `${data.gpu.utilization}%`;
+      if (tdGpuTemp && data.gpu) tdGpuTemp.textContent = `${data.gpu.temperature}°C`;
+      if (tdRamVal) tdRamVal.textContent = `${data.ram_percent}%`;
+      if (tdRamUsed) tdRamUsed.textContent = `${data.ram_used_gb} / ${data.ram_total_gb} GB`;
+      if (tdPingVal && data.network) tdPingVal.textContent = `${data.network.ping_ms} ms`;
+
+      if (activePortsList) {
+        const ports = data.ports_meta || [];
+        if (ports.length === 0) {
+          activePortsList.innerHTML = '<div style="color:var(--text-muted); padding:4px;">No standard dev listening ports found.</div>';
+        } else {
+          activePortsList.innerHTML = '';
+          ports.forEach(p => {
+            const row = document.createElement('div');
+            row.className = 'active-port-item';
+            row.innerHTML = `
+              <span>Port <b>:${p.port}</b> (${p.process_name || 'LISTENING'} PID ${p.pid})</span>
+              <button class="port-chip" style="color:#f87171; border-color:#ef4444;" data-port="${p.port}">Close</button>
+            `;
+            row.querySelector('button').addEventListener('click', () => killPortWithFeedback(p.port, p.process_name, p.pid));
+            activePortsList.appendChild(row);
+          });
+        }
+      }
+    }
+
+    async function killPort(port) {
+      await killPortWithFeedback(port);
+    }
+
+    if (cleanRamBtn) {
+      cleanRamBtn.addEventListener('click', async () => {
+        haptic(40);
+        try {
+          const res = await fetch('/api/system/clean-ram', { method: 'POST' });
+          const data = await res.json();
+          showToast(data.message || 'Trimmed RAM Working Sets!', '🧹');
+          addPetXp(15);
+          setPetMood('happy');
+          pollTelemetry();
+        } catch (e) {
+          showToast('Failed to clean RAM', '✕', true);
+        }
+      });
+    }
+
+    if (customPortKillBtn && customPortInput) {
+      customPortKillBtn.addEventListener('click', () => {
+        const p = customPortInput.value.trim();
+        if (p) killPortWithFeedback(parseInt(p));
+      });
+    }
+
+    if (portsQuickKillBtn && portsQuickInput) {
+      portsQuickKillBtn.addEventListener('click', () => {
+        const p = portsQuickInput.value.trim();
+        if (p) {
+          killPortWithFeedback(parseInt(p));
+          portsQuickInput.value = '';
+        }
+      });
+    }
+
+    document.querySelectorAll('.port-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const port = chip.getAttribute('data-port');
+        if (port) killPortWithFeedback(parseInt(port));
+      });
+    });
+
+    if (openPortsBtn) {
+      openPortsBtn.addEventListener('click', () => {
+        haptic(35);
+        portsModal?.classList.add('open');
+        fetchAndRenderPorts();
+      });
+    }
+    if (portsModalClose) {
+      portsModalClose.addEventListener('click', () => portsModal?.classList.remove('open'));
+    }
+    if (refreshPortsBtn) {
+      refreshPortsBtn.addEventListener('click', () => {
+        haptic(30);
+        fetchAndRenderPorts();
+      });
+    }
+    portsModal?.addEventListener('click', (e) => {
+      if (e.target === portsModal) portsModal.classList.remove('open');
+    });
+
+    if (openTelemBtn) {
+      openTelemBtn.addEventListener('click', () => {
+        if (latestTelemetry) updateTelemetryModalUI(latestTelemetry);
+        telemetryModal?.classList.add('open');
+      });
+    }
+    if (telemModalClose) {
+      telemModalClose.addEventListener('click', () => telemetryModal?.classList.remove('open'));
+    }
+    telemetryModal?.addEventListener('click', (e) => {
+      if (e.target === telemetryModal) telemetryModal.classList.remove('open');
+    });
+
+    // ===========================================================
+    // 4. Windows App Launcher Controller
+    // ===========================================================
+    const islandLauncherBtn = document.getElementById('island-launcher-btn');
+    const appLauncherModal = document.getElementById('app-launcher-modal');
+    const launcherModalClose = document.getElementById('launcher-modal-close');
+    const launcherSearchInput = document.getElementById('launcher-search-input');
+    const launcherAppsList = document.getElementById('launcher-apps-list');
+    const launcherTabs = document.querySelectorAll('.launcher-tab');
+    const launcherCountAll = document.getElementById('launcher-count-all');
+
+    let availableApps = [];
+    let currentAppCat = 'all';
+    let currentAppSearch = '';
+
+    async function loadAvailableApps() {
+      try {
+        const res = await fetch('/api/apps');
+        if (res.ok) {
+          availableApps = await res.json();
+          if (launcherCountAll) launcherCountAll.textContent = availableApps.length;
+          renderAppLauncherList();
+        }
+      } catch (e) {}
+    }
+
+    function renderAppLauncherList() {
+      if (!launcherAppsList) return;
+      let filtered = availableApps;
+
+      if (currentAppCat !== 'all') {
+        filtered = filtered.filter(a => (a.category || '').toLowerCase() === currentAppCat.toLowerCase());
+      }
+      if (currentAppSearch) {
+        const q = currentAppSearch.toLowerCase();
+        filtered = filtered.filter(a => (a.name || '').toLowerCase().includes(q) || (a.desc && a.desc.toLowerCase().includes(q)));
+      }
+
+      launcherAppsList.innerHTML = '';
+      if (!filtered || filtered.length === 0) {
+        launcherAppsList.innerHTML = '<div style="grid-column: 1/-1; color:var(--text-muted); font-size:0.8rem; text-align:center; padding:30px;">No matching apps found.</div>';
+        return;
+      }
+
+      filtered.forEach(app => {
+        const card = document.createElement('div');
+        card.className = 'app-launch-card';
+        card.innerHTML = `
+          <div class="app-card-icon">${app.icon || '🪟'}</div>
+          <div class="app-card-name" title="${app.name}">${app.name}</div>
+          <div class="app-card-cat">${app.category || 'App'}</div>
+          <div class="app-card-launch-badge">Launch 🚀</div>
+        `;
+        card.addEventListener('click', async () => {
+          haptic(40);
+          try {
+            const res = await fetch('/api/apps/launch', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ target: app.target })
+            });
+            const data = await res.json();
+            if (data.success) {
+              showToast(`Started ${app.name}! 🚀`, '✓');
+              addPetXp(5);
+              appLauncherModal?.classList.remove('open');
+            } else {
+              showToast(`Failed: ${data.error || 'Cannot open'}`, '✕', true);
+            }
+          } catch (e) {
+            showToast(`Failed to launch ${app.name}`, '✕', true);
+          }
+        });
+        launcherAppsList.appendChild(card);
+      });
+    }
+
+    if (islandLauncherBtn) {
+      islandLauncherBtn.addEventListener('click', () => {
+        haptic(35);
+        loadAvailableApps();
+        appLauncherModal?.classList.add('open');
+        setTimeout(() => launcherSearchInput?.focus(), 120);
+      });
+    }
+
+    if (launcherModalClose) {
+      launcherModalClose.addEventListener('click', () => appLauncherModal?.classList.remove('open'));
+    }
+    appLauncherModal?.addEventListener('click', (e) => {
+      if (e.target === appLauncherModal) appLauncherModal.classList.remove('open');
+    });
+
+    if (launcherSearchInput) {
+      launcherSearchInput.addEventListener('input', (e) => {
+        currentAppSearch = e.target.value.trim();
+        renderAppLauncherList();
+      });
+    }
+
+    launcherTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        launcherTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentAppCat = tab.getAttribute('data-cat') || 'all';
+        renderAppLauncherList();
+      });
+    });
+
+    // ===========================================================
+    // 5. Standby HUD Fullscreen Dashboard Controller (OLED Ambient Mode)
+    // ===========================================================
+    const openStandbyBtn = document.getElementById('open-standby-btn');
+    const standbyHud = document.getElementById('standby-hud');
+    const standbyDriftWrap = document.getElementById('standby-drift-wrap');
+
+    // Big Number Clock Elements
+    const standbyClockHours = document.getElementById('standby-clock-hours');
+    const standbyClockMins = document.getElementById('standby-clock-mins');
+    const standbySecBadge = document.getElementById('standby-sec-badge');
+    const standbyAmpmBadge = document.getElementById('standby-ampm-badge');
+    const standbyClock = document.getElementById('standby-clock');
+    const standbyDate = document.getElementById('standby-date');
+
+    // Standby Volume Elements (Readout Only)
+    const standbyVolNum = document.getElementById('standby-vol-num');
+    const standbyVolFill = document.getElementById('standby-vol-fill');
+    const standbyVolStatusBadge = document.getElementById('standby-vol-status-badge');
+    const standbyAudioMeta = document.getElementById('standby-audio-meta');
+
+    // Status Badges & Hardware Elements
+    const standbyGpuBadgeText = document.getElementById('standby-gpu-badge-text');
+    const standbyPowerBadgeText = document.getElementById('standby-power-badge-text');
+    const standbyUptimeBadgeText = document.getElementById('standby-uptime-badge-text');
+    const standbyPowerBadge = document.getElementById('standby-power-badge');
+
+    // Vitals Metric Elements
+    const gaugeCpuVal = document.getElementById('gauge-cpu-val');
+    const gaugeCpuSub = document.getElementById('gauge-cpu-sub');
+    const vitalCpuBar = document.getElementById('vital-cpu-bar');
+    const standbyCpuTag = document.getElementById('standby-cpu-tag');
+    const gaugeCpuBar = document.getElementById('gauge-cpu-bar'); // legacy fallback
+
+    const gaugeGpuVal = document.getElementById('gauge-gpu-val');
+    const gaugeGpuTemp = document.getElementById('gauge-gpu-temp');
+    const gaugeGpuVram = document.getElementById('gauge-gpu-vram');
+    const gaugeGpuVramFill = document.getElementById('gauge-gpu-vram-fill');
+    const standbyGpuCardTitle = document.getElementById('standby-gpu-card-title');
+    const gaugeGpuBar = document.getElementById('gauge-gpu-bar'); // legacy fallback
+
+    const gaugeRamVal = document.getElementById('gauge-ram-val');
+    const gaugeRamSub = document.getElementById('gauge-ram-sub');
+    const gaugeRamAvail = document.getElementById('gauge-ram-avail');
+    const vitalRamBar = document.getElementById('vital-ram-bar');
+    const gaugeRamBar = document.getElementById('gauge-ram-bar'); // legacy fallback
+
+    const standbyDownSpeed = document.getElementById('standby-down-speed');
+    const standbyUpSpeed = document.getElementById('standby-up-speed');
+    const standbyPingBadge = document.getElementById('standby-ping-badge');
+    const vitalNetBar = document.getElementById('vital-net-bar');
+    const standbyDownSpeedLegend = document.getElementById('standby-down-speed-legend');
+    const standbyUpSpeedLegend = document.getElementById('standby-up-speed-legend');
+
+    // Bottom Power / System Dock Elements
+    const standbyPowerSourceVal = document.getElementById('standby-power-source-val');
+    const standbyUptimeVal = document.getElementById('standby-uptime-val');
+    const standbyGpuFullname = document.getElementById('standby-gpu-fullname');
+    const standbyPortsVal = document.getElementById('standby-ports-val');
+
+    // Sparkline & Pet Elements
+    const sparklineDownArea = document.getElementById('sparkline-down-area');
+    const sparklineDownLine = document.getElementById('sparkline-down-line');
+    const sparklineUpLine = document.getElementById('sparkline-up-line');
+    const standbyPetNest = document.getElementById('standby-pet-nest');
+
+    let isStandbyOpen = false;
+    let standbyClockTimer = null;
+    let networkSpeedHistory = [];
+    const MAX_SPARKLINE_POINTS = 25;
+    let standbyEnteredAt = 0;
+
+    // ===========================================================
+    // Standby Wake Protection & Double-Click Guard
+    // Prevents accidental click-throughs, synthetic touch clicks,
+    // and rapid double-clicks on home screen buttons when waking from standby.
+    // ===========================================================
+    const STANDBY_WAKE_GUARD_DELAY_MS = 600;
+    let lastStandbyExitedAt = 0;
+    let isStandbyWakeLocked = false;
+    let standbyWakeLockTimer = null;
+    let lastSwallowedDownAt = 0;
+
+    function activateStandbyWakeGuard() {
+      lastStandbyExitedAt = Date.now();
+      isStandbyWakeLocked = true;
+      document.body.classList.add('standby-wake-locked');
+
+      if (standbyWakeLockTimer) clearTimeout(standbyWakeLockTimer);
+      standbyWakeLockTimer = setTimeout(() => {
+        isStandbyWakeLocked = false;
+        document.body.classList.remove('standby-wake-locked');
+      }, STANDBY_WAKE_GUARD_DELAY_MS);
+    }
+
+    // Capture-phase event suppressor: captures and drops all clicks, double clicks,
+    // pointer, and touch events on the home screen immediately following a standby wake
+    const wakeGuardEvents = [
+      'click', 'dblclick', 'auxclick', 'contextmenu',
+      'pointerdown', 'pointerup',
+      'mousedown', 'mouseup',
+      'touchstart', 'touchend', 'touchcancel'
+    ];
+
+    wakeGuardEvents.forEach((evtType) => {
+      window.addEventListener(evtType, (e) => {
+        const timeSinceExit = Date.now() - lastStandbyExitedAt;
+        const timeSinceSwallowedDown = Date.now() - lastSwallowedDownAt;
+        const shouldBlock = isStandbyWakeLocked || 
+                            (timeSinceExit < STANDBY_WAKE_GUARD_DELAY_MS) || 
+                            (timeSinceSwallowedDown < 500);
+
+        if (shouldBlock) {
+          // Allow interactions if they are inside standby HUD itself
+          if (e.target && (e.target.id === 'standby-hud' || (e.target.closest && e.target.closest('#standby-hud')))) {
+            return;
+          }
+
+          if (evtType === 'pointerdown' || evtType === 'mousedown' || evtType === 'touchstart') {
+            lastSwallowedDownAt = Date.now();
+          }
+
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+          }
+          return false;
+        }
+      }, true); // true = capture phase before any home screen node sees the event
+    });
+
+    // OLED Anti-Burn-In Pixel Drift
+    let driftIndex = 0;
+    const driftOffsets = [
+      { x: 0, y: 0 },
+      { x: 1, y: 1 },
+      { x: -1, y: 0 },
+      { x: 0, y: 1 },
+      { x: 1, y: -1 },
+      { x: -1, y: -1 }
+    ];
+    function applyOledDrift() {
+      if (!standbyDriftWrap) return;
+      driftIndex = (driftIndex + 1) % driftOffsets.length;
+      const off = driftOffsets[driftIndex];
+      standbyDriftWrap.style.transform = `translate(${off.x}px, ${off.y}px)`;
+    }
+
+    // Standby Volume UI Sync (Readout Only)
+    function updateStandbyVolumeUI(vol, muted) {
+      if (standbyVolNum) {
+        standbyVolNum.textContent = muted ? 'MUTE' : vol;
+      }
+      if (standbyVolFill) {
+        standbyVolFill.style.width = `${muted ? 0 : vol}%`;
+        standbyVolFill.style.background = muted ? '#ef4444' : 'linear-gradient(90deg, #0ea5e9, #38bdf8)';
+      }
+      if (standbyVolStatusBadge) {
+        standbyVolStatusBadge.textContent = muted ? 'MUTED' : (vol === 0 ? 'SILENT' : 'ACTIVE');
+        standbyVolStatusBadge.classList.toggle('muted', muted);
+      }
+    }
+
+    function enterStandbyMode() {
+      isStandbyOpen = true;
+      isSleeping = true;
+      standbyEnteredAt = Date.now();
+      if (standbyHud) {
+        standbyHud.style.display = 'flex';
+      }
+      setPetMood('sleeping');
+      updateStandbyClock();
+      clearInterval(standbyClockTimer);
+      standbyClockTimer = setInterval(updateStandbyClock, 1000);
+
+      // In standby mode, pause fast active polling and poll every 60s to save energy
+      stopPolling();
+      stopTelemetryPolling();
+      clearInterval(standbySyncTimer);
+      standbySyncTimer = setInterval(() => {
+        pollTelemetry();
+        syncState();
+      }, 60000); // 60 seconds
+
+      // Immediate refresh on entering standby
+      updateStandbyVolumeUI(currentMasterVolume, currentMasterMuted);
+      if (latestTelemetry) updateStandbyHUDUI(latestTelemetry);
+      pollTelemetry();
+      syncState();
+    }
+
+    function exitStandbyMode() {
+      if (!isStandbyOpen && !isSleeping) return;
+      isStandbyOpen = false;
+      isSleeping = false;
+      lastActivityTimestamp = Date.now();
+
+      // Enforce the wake guard delay to protect home screen buttons from click-throughs and double-clicks
+      activateStandbyWakeGuard();
+
+      if (standbyHud) {
+        standbyHud.style.display = 'none';
+      }
+      clearInterval(standbyClockTimer);
+      clearInterval(standbySyncTimer);
+
+      setPetMood(isPomoRunning ? 'coding' : 'idle');
+
+      // Silently restore fast active polling
+      startPolling();
+      startTelemetryPolling();
+      syncState();
+      pollTelemetry();
+    }
+
+    function updateStandbyClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      const minutesStr = String(now.getMinutes()).padStart(2, '0');
+      const secondsStr = String(now.getSeconds()).padStart(2, '0');
+
+      if (standbyClockHours) standbyClockHours.textContent = hoursStr;
+      if (standbyClockMins) standbyClockMins.textContent = minutesStr;
+      if (standbySecBadge) standbySecBadge.textContent = `:${secondsStr}`;
+      if (standbyAmpmBadge) standbyAmpmBadge.textContent = ampm;
+
+      if (standbyClock) {
+        standbyClock.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }
+      if (standbyDate) {
+        standbyDate.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      }
+
+      // Check OLED burn-in drift once per minute (at 0 seconds)
+      if (now.getSeconds() === 0) {
+        applyOledDrift();
+      }
+    }
+
+    function updateRadialGauge(barEl, pct) {
+      if (!barEl) return;
+      const offset = FULL_DASH_ARRAY * (1 - Math.min(100, Math.max(0, pct)) / 100);
+      barEl.style.strokeDashoffset = offset;
+    }
+
+    function updateStandbyHUDUI(data) {
+      if (!data) return;
+
+      // 1. CPU Telemetry (Big Number & Logical Cores)
+      const cpuPct = data.cpu_percent || 0;
+      updateRadialGauge(gaugeCpuBar, cpuPct);
+      if (gaugeCpuVal) gaugeCpuVal.textContent = `${cpuPct}%`;
+      if (vitalCpuBar) vitalCpuBar.style.width = `${cpuPct}%`;
+      if (gaugeCpuSub) {
+        const cores = data.cpu_cores || 12;
+        gaugeCpuSub.textContent = `${cores} Cores • ${cpuPct > 75 ? 'BOOST LOAD' : 'NORMAL'}`;
+      }
+      if (standbyCpuTag) {
+        standbyCpuTag.textContent = cpuPct > 75 ? 'Boost' : 'Optimal';
+        standbyCpuTag.style.color = cpuPct > 75 ? '#f59e0b' : '#38bdf8';
+      }
+
+      // 2. GPU Telemetry (Real NVIDIA GeForce RTX 5060)
+      if (data.gpu) {
+        const gpuUtil = data.gpu.utilization || 0;
+        updateRadialGauge(gaugeGpuBar, gpuUtil);
+        if (gaugeGpuVal) gaugeGpuVal.textContent = `${gpuUtil}%`;
+        if (gaugeGpuTemp) gaugeGpuTemp.textContent = `${data.gpu.temperature || 0}°C`;
+        
+        const usedMb = data.gpu.memory_used_mb || 0;
+        const totMb = data.gpu.memory_total_mb || 8192;
+        const usedGb = (usedMb / 1024).toFixed(1);
+        const totGb = (totMb / 1024).toFixed(1);
+
+        if (gaugeGpuVram) {
+          gaugeGpuVram.textContent = `${usedGb} / ${totGb} GB VRAM (${usedMb} MB)`;
+        }
+        if (gaugeGpuVramFill) {
+          gaugeGpuVramFill.style.width = `${Math.min(100, (usedMb / totMb) * 100)}%`;
+        }
+
+        const rawGpuName = data.gpu.name || 'NVIDIA GeForce RTX 5060';
+        const cleanGpuName = rawGpuName.replace('NVIDIA GeForce ', '').trim();
+        if (standbyGpuCardTitle) standbyGpuCardTitle.textContent = `🎮 ${cleanGpuName}`;
+        if (standbyGpuBadgeText) standbyGpuBadgeText.textContent = `${cleanGpuName} LIVE HUD`;
+        if (standbyGpuFullname) standbyGpuFullname.textContent = rawGpuName;
+      }
+
+      // 3. RAM Telemetry
+      const ramPct = data.ram_percent || 0;
+      updateRadialGauge(gaugeRamBar, ramPct);
+      if (gaugeRamVal) gaugeRamVal.textContent = `${ramPct}%`;
+      if (vitalRamBar) vitalRamBar.style.width = `${ramPct}%`;
+      if (gaugeRamSub) gaugeRamSub.textContent = `${data.ram_used_gb || 0} GB / ${data.ram_total_gb || 32} GB`;
+      if (gaugeRamAvail) gaugeRamAvail.textContent = `${data.ram_avail_gb || 0} GB Free`;
+
+      // 4. Network Telemetry & Real-Time Sparkline
+      if (data.network) {
+        const downKb = data.network.down_speed_kb || 0;
+        const upKb = data.network.up_speed_kb || 0;
+        const downFormatted = downKb > 1024 ? `${(downKb / 1024).toFixed(1)} MB/s` : `${downKb.toFixed(1)} KB/s`;
+        const upFormatted = upKb > 1024 ? `${(upKb / 1024).toFixed(1)} MB/s` : `${upKb.toFixed(1)} KB/s`;
+
+        if (standbyDownSpeed) standbyDownSpeed.textContent = downFormatted;
+        if (standbyUpSpeed) standbyUpSpeed.textContent = upFormatted;
+        if (standbyDownSpeedLegend) standbyDownSpeedLegend.textContent = downFormatted;
+        if (standbyUpSpeedLegend) standbyUpSpeedLegend.textContent = upFormatted;
+
+        if (vitalNetBar) {
+          vitalNetBar.style.width = `${Math.min(100, (downKb / 5120) * 100)}%`;
+        }
+
+        if (standbyPingBadge) {
+          const pingMs = data.network.ping_ms || 16;
+          standbyPingBadge.textContent = `${pingMs} ms • ${pingMs < 30 ? 'Optimal' : 'Standard'}`;
+        }
+
+        networkSpeedHistory.push({ down: downKb, up: upKb });
+        if (networkSpeedHistory.length > MAX_SPARKLINE_POINTS) networkSpeedHistory.shift();
+        renderSparkline();
+      }
+
+      // 5. Real Windows Power & Battery Telemetry
+      if (data.power) {
+        const powerText = data.power.status_text || 'AC Mains (Desktop ⚡)';
+        if (standbyPowerBadgeText) standbyPowerBadgeText.textContent = powerText;
+        if (standbyPowerSourceVal) standbyPowerSourceVal.textContent = powerText;
+        if (standbyPowerBadge) {
+          standbyPowerBadge.classList.toggle('power-ac', data.power.ac_online);
+        }
+      }
+
+      // 6. Real Windows Uptime Telemetry
+      if (data.uptime) {
+        const upFormatted = data.uptime.formatted || '0h 0m';
+        if (standbyUptimeBadgeText) standbyUptimeBadgeText.textContent = `Uptime: ${upFormatted}`;
+        if (standbyUptimeVal) standbyUptimeVal.textContent = `${upFormatted} (${data.uptime.seconds}s)`;
+      }
+
+      // 7. Active Ports & Services
+      if (data.listening_ports && data.listening_ports.length > 0) {
+        if (standbyPortsVal) {
+          standbyPortsVal.textContent = `${data.listening_ports.length} Active (Ports :${data.listening_ports.slice(0, 3).join(', :')})`;
+        }
+      } else {
+        if (standbyPortsVal) standbyPortsVal.textContent = 'Clean / Idle (0 Ports)';
+      }
+
+      // 8. Audio Telemetry
+      if (data.audio) {
+        if (data.audio.master_volume !== undefined) {
+          currentMasterVolume = data.audio.master_volume;
+          currentMasterMuted = data.audio.master_muted;
+          updateStandbyVolumeUI(currentMasterVolume, currentMasterMuted);
+        }
+        if (standbyAudioMeta) {
+          if (data.audio.active_sessions && data.audio.active_sessions.length > 0) {
+            standbyAudioMeta.textContent = `Active Streams: ${data.audio.active_sessions.slice(0, 3).join(', ')}`;
+          } else {
+            standbyAudioMeta.textContent = 'Default Device: Speakers • No active app streams';
+          }
+        }
+      }
+    }
+
+    function renderSparkline() {
+      if (!sparklineDownArea || !sparklineDownLine || networkSpeedHistory.length < 2) return;
+      const w = 400;
+      const h = 60;
+      const maxVal = Math.max(10, ...networkSpeedHistory.map(p => Math.max(p.down, p.up)));
+      const step = w / (networkSpeedHistory.length - 1);
+
+      let downLinePoints = [];
+      let upLinePoints = [];
+
+      networkSpeedHistory.forEach((pt, i) => {
+        const x = i * step;
+        const yDown = h - (pt.down / maxVal) * (h - 8) - 4;
+        const yUp = h - (pt.up / maxVal) * (h - 8) - 4;
+        downLinePoints.push(`${x.toFixed(1)},${yDown.toFixed(1)}`);
+        upLinePoints.push(`${x.toFixed(1)},${yUp.toFixed(1)}`);
+      });
+
+      const downLineStr = `M ${downLinePoints.join(' L ')}`;
+      const downAreaStr = `M 0,${h} L ${downLinePoints.join(' L ')} L ${w},${h} Z`;
+      const upLineStr = `M ${upLinePoints.join(' L ')}`;
+
+      sparklineDownArea.setAttribute('d', downAreaStr);
+      sparklineDownLine.setAttribute('d', downLineStr);
+      if (sparklineUpLine) sparklineUpLine.setAttribute('d', upLineStr);
+    }
+
+    if (openStandbyBtn) {
+      openStandbyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        haptic(40);
+        enterStandbyMode();
+      });
+    }
+
+    if (standbyHud) {
+      // Non-interactive Standby screen: touching or clicking anywhere immediately deactivates standby
+      const handleStandbyWake = (e) => {
+        if (Date.now() - standbyEnteredAt < 350) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          return; // Ignore initial open bounce
+        }
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+        }
+        exitStandbyMode();
+      };
+      standbyHud.addEventListener('click', handleStandbyWake);
+      standbyHud.addEventListener('touchend', handleStandbyWake, { passive: false });
+      standbyHud.addEventListener('pointerup', handleStandbyWake);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      lastActivityTimestamp = Date.now();
+      if (isStandbyOpen) {
+        exitStandbyMode();
+        return;
+      }
+      if (e.key === 'Escape') {
+        telemetryModal?.classList.remove('open');
+        pomodoroModal?.classList.remove('open');
+        appLauncherModal?.classList.remove('open');
+        portsModal?.classList.remove('open');
+      }
+    });
+
     // Startup Initialization
     restoreCachedState();
+    loadPetData();
+    initRoamingPet();
+    pollTelemetry();
+    startTelemetryPolling();
     loadInfo();
     loadShortcuts();
     syncState();

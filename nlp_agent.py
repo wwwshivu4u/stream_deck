@@ -1,4 +1,4 @@
-"""
+f"""
 Local NLP Agent Module
 Interprets spoken or typed natural language commands locally and triggers actions:
 - OBS Studio ("start recording in OBS Studio")
@@ -17,6 +17,7 @@ import urllib.request
 from typing import Any, Dict, Optional
 
 import audio_manager
+import notes_manager
 import shortcuts_manager
 import system_controller
 
@@ -34,6 +35,244 @@ def parse_volume_level(text: str) -> Optional[int]:
     if m:
         val = int(m.group(1))
         return max(0, min(100, val))
+    return None
+
+
+_DETECTED_OLLAMA_MODEL = None
+_LAST_OLLAMA_CHECK = 0.0
+
+
+def get_best_ollama_model() -> Optional[str]:
+    """Detects available models in Ollama, prioritizing lightweight models."""
+    global _DETECTED_OLLAMA_MODEL, _LAST_OLLAMA_CHECK
+    now = time.time()
+    if _DETECTED_OLLAMA_MODEL and (now - _LAST_OLLAMA_CHECK < 60.0):
+        return _DETECTED_OLLAMA_MODEL
+
+    preferred = [
+        "qwen2.5:0.5b",
+        "llama3.2:1b",
+        "qwen2.5:1.5b",
+        "tinyllama",
+        "phi3:mini",
+        "gemma3:4b",
+        "gemma2:2b",
+        "llama3",
+        "mistral",
+    ]
+
+    try:
+        req = urllib.request.Request("http://127.0.0.1:11434/api/tags")
+        with urllib.request.urlopen(req, timeout=1.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            installed_models = [m.get("name", "") for m in data.get("models", [])]
+            for p in preferred:
+                for inst in installed_models:
+                    if inst == p or inst.startswith(p.split(":")[0]):
+                        _DETECTED_OLLAMA_MODEL = inst
+                        _LAST_OLLAMA_CHECK = now
+                        return inst
+            if installed_models:
+                _DETECTED_OLLAMA_MODEL = installed_models[0]
+                _LAST_OLLAMA_CHECK = now
+                return _DETECTED_OLLAMA_MODEL
+    except Exception:
+        pass
+
+    return "qwen2.5:0.5b"
+
+
+def execute_via_ollama(raw_text: str, query: str) -> Optional[Dict[str, Any]]:
+    """Attempts to use local Ollama LLM to classify and execute the command."""
+    model = get_best_ollama_model()
+    if not model:
+        return None
+
+    prompt = (
+        "You are an AI assistant for a Windows volume and PC controller app. "
+        "Convert the user's voice command into a single JSON object with the action intent and parameters.\n"
+        f"User: \"{raw_text}\"\n\n"
+        "Valid JSON formats:\n"
+        "- {\"intent\": \"note\", \"text\": \"<note text>\"} (e.g. 'note review PR tomorrow', 'add todo deploy app')\n"
+        "- {\"intent\": \"kill_port\", \"port\": 3000} (e.g. 'kill port 3000', 'free port 8080')\n"
+        "- {\"intent\": \"mode\", \"mode\": \"deep_work\"|\"meeting\"|\"gaming\"|\"relax\"} (e.g. 'deep work mode', 'meeting mode')\n"
+        "- {\"intent\": \"ask_pet\"} (e.g. 'ask pet', 'pet advice', 'talk to byte')\n"
+        "- {\"intent\": \"mic_mute\", \"muted\": true|false} (e.g. 'mute mic', 'unmute mic')\n"
+        "- {\"intent\": \"discord_deafen\"} (e.g. 'deafen', 'deafen discord', 'toggle deafen')\n"
+        "- {\"intent\": \"master_volume\", \"volume\": 0-100} (e.g. 'set volume to 40%')\n"
+        "- {\"intent\": \"app_volume\", \"app\": \"<name>\", \"volume\": 0-100} (e.g. 'set spotify volume to 80%')\n"
+        "- {\"intent\": \"master_mute\", \"muted\": true|false} (e.g. 'mute master', 'silence pc')\n"
+        "- {\"intent\": \"app_mute\", \"app\": \"<name>\", \"muted\": true|false} (e.g. 'mute chrome')\n"
+        "- {\"intent\": \"obs_record\", \"action\": \"toggle\"|\"start\"|\"stop\"} (e.g. 'start recording in obs')\n"
+        "- {\"intent\": \"media\", \"action\": \"play_pause\"|\"next\"|\"prev\"}\n"
+        "- {\"intent\": \"lock_pc\"}\n"
+        "- {\"intent\": \"show_desktop\"}\n"
+        "- {\"intent\": \"launch\", \"app\": \"<name>\"}\n"
+        "- {\"intent\": \"stack_apps\", \"monitor\": 1|2}\n\n"
+        "Return ONLY the JSON object. Do not explain."
+    )
+
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:11434/api/generate",
+            data=json.dumps({
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json"
+            }).encode("utf-8"),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=1.8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            ans = data.get("response", "").strip()
+            if ans.startswith("```"):
+                ans = re.sub(r"^```(?:json)?\s*", "", ans)
+                ans = re.sub(r"\s*```$", "", ans)
+            parsed = json.loads(ans)
+            if not isinstance(parsed, dict) or "intent" not in parsed:
+                return None
+
+            intent = parsed.get("intent")
+            model_tag = f"{model} (Ollama)"
+
+            if intent == "mic_mute":
+                m = parsed.get("muted", True)
+                res = audio_manager.set_mic_mute(m)
+                is_m = res.get("muted", m)
+                msg = "Microphone Muted" if is_m else "Microphone Live"
+                return {"success": True, "intent": "mic_mute", "action": "mute" if is_m else "unmute", "message": msg, "speech": msg, "data": res, "model": model_tag}
+
+            elif intent == "discord_deafen":
+                system_controller.send_hotkey(["ctrl", "f1"])
+                return {"success": True, "intent": "discord_deafen", "action": "deafen", "message": "Toggled Discord Deafen (Ctrl+F1)", "speech": "Toggled Discord deafen.", "data": {"hotkey": "Ctrl+F1"}, "model": model_tag}
+
+            elif intent == "master_volume":
+                vol = max(0, min(100, int(parsed.get("volume", 50))))
+                audio_manager.set_master_volume(vol)
+                return {"success": True, "intent": "master_volume", "action": "set_volume", "message": f"Set master volume to {vol}%", "speech": f"Set master volume to {vol} percent.", "data": {"volume": vol}, "model": model_tag}
+
+            elif intent == "app_volume":
+                app_target = parsed.get("app", "").lower()
+                vol = max(0, min(100, int(parsed.get("volume", 50))))
+                state = audio_manager.get_audio_state()
+                matched = None
+                for s in state.get("sessions", []):
+                    if app_target in (s.get("name") or "").lower() or app_target in (s.get("displayName") or "").lower():
+                        matched = s
+                        break
+                if matched:
+                    audio_manager.set_app_volume(matched["pid"], vol)
+                    name = matched.get("displayName") or matched["name"]
+                    return {"success": True, "intent": "app_volume", "action": "set_volume", "message": f"Set {name} volume to {vol}%", "speech": f"Set {name} volume to {vol} percent.", "data": {"app": name, "volume": vol}, "model": model_tag}
+                else:
+                    audio_manager.set_master_volume(vol)
+                    return {"success": True, "intent": "master_volume", "action": "set_volume", "message": f"Set master volume to {vol}%", "speech": f"Set master volume to {vol} percent.", "data": {"volume": vol}, "model": model_tag}
+
+            elif intent == "master_mute":
+                m = parsed.get("muted", True)
+                audio_manager.set_master_mute(m)
+                msg = "Muted Master audio" if m else "Unmuted Master audio"
+                return {"success": True, "intent": "master_mute", "action": "mute" if m else "unmute", "message": msg, "speech": msg, "data": {"muted": m}, "model": model_tag}
+
+            elif intent == "app_mute":
+                app_target = parsed.get("app", "").lower()
+                m = parsed.get("muted", True)
+                state = audio_manager.get_audio_state()
+                matched = None
+                for s in state.get("sessions", []):
+                    if app_target in (s.get("name") or "").lower() or app_target in (s.get("displayName") or "").lower():
+                        matched = s
+                        break
+                if matched:
+                    audio_manager.set_app_mute(matched["pid"], m)
+                    action_word = "Muted" if m else "Unmuted"
+                    name = matched.get("displayName") or matched["name"]
+                    return {"success": True, "intent": "app_mute", "action": "mute" if m else "unmute", "message": f"{action_word} {name}", "speech": f"{action_word} {name}.", "data": {"app": name, "muted": m}, "model": model_tag}
+                else:
+                    audio_manager.set_master_mute(m)
+                    msg = "Muted Master audio" if m else "Unmuted Master audio"
+                    return {"success": True, "intent": "master_mute", "action": "mute" if m else "unmute", "message": msg, "speech": msg, "data": {"muted": m}, "model": model_tag}
+
+            elif intent == "obs_record":
+                act = parsed.get("action", "toggle")
+                res = system_controller.trigger_obs_record(action=act)
+                msg = res.get("message", "Triggered OBS Recording")
+                return {"success": True, "intent": "obs_record", "action": act, "message": msg, "speech": msg, "data": res, "model": model_tag}
+
+            elif intent == "media":
+                act = parsed.get("action", "play_pause")
+                hk = "media_play_pause" if act in ("play_pause", "toggle") else ("media_next" if act == "next" else "media_prev")
+                system_controller.send_hotkey([hk])
+                return {"success": True, "intent": "media", "action": act, "message": f"Media {act.replace('_', ' ').title()}", "speech": f"Media {act}.", "data": {"hotkey": hk}, "model": model_tag}
+
+            elif intent == "lock_pc":
+                system_controller.lock_workstation()
+                return {"success": True, "intent": "lock_pc", "action": "lock", "message": "Locked Windows PC", "speech": "Locked Windows PC.", "data": {}, "model": model_tag}
+
+            elif intent == "show_desktop":
+                system_controller.send_hotkey(["win", "d"])
+                return {"success": True, "intent": "show_desktop", "action": "toggle", "message": "Toggled Show Desktop", "speech": "Showing desktop.", "data": {}, "model": model_tag}
+
+            elif intent == "launch":
+                app_name = parsed.get("app", "")
+                res = system_controller.run_system_command(f"start {app_name}:")
+                return {"success": res.get("success", True), "intent": "launch", "action": "launch", "message": f"Launched {app_name.title()}", "speech": f"Launched {app_name}.", "data": res, "model": model_tag}
+
+            elif intent == "stack_apps":
+                mon = parsed.get("monitor", 2)
+                res = shortcuts_manager.run_shortcut("stack_screen_2")
+                return {"success": True, "intent": "window_stack", "action": "stack_apps", "message": f"Arranged apps on Screen {mon}", "speech": f"Arranged apps on screen {mon}.", "data": res, "model": model_tag}
+
+            elif intent == "note":
+                txt = parsed.get("text") or raw_text
+                item = notes_manager.add_note(txt, "task")
+                msg = f"Saved Note: \"{item['text']}\""
+                return {"success": True, "intent": "note", "action": "note_saved", "message": msg, "speech": "Note saved to your brain dump.", "data": item, "model": model_tag}
+
+            elif intent == "kill_port":
+                port = int(parsed.get("port", 3000))
+                res = system_controller.kill_port(port)
+                msg = res.get("message", f"Freed port {port}")
+                return {"success": True, "intent": "kill_port", "action": "kill_port", "message": msg, "speech": msg, "data": res, "model": model_tag}
+
+            elif intent == "mode":
+                mode_target = parsed.get("mode", "deep_work")
+                pet_mood = "idle"
+                if mode_target in ("deep_work", "focus"):
+                    audio_manager.set_master_volume(35)
+                    pet_mood = "coding"
+                    msg = "🧘 Deep Work active: distractions muted, focus started!"
+                elif mode_target in ("meeting", "standup"):
+                    audio_manager.set_mic_mute(False)
+                    pet_mood = "meeting"
+                    msg = "🎙️ Meeting Mode active: microphone live & ready!"
+                elif mode_target in ("gaming", "game"):
+                    audio_manager.set_master_volume(75)
+                    pet_mood = "gaming"
+                    msg = "🎮 Gaming Mode active: audio maximized!"
+                elif mode_target in ("relax", "wind_down"):
+                    audio_manager.set_master_volume(20)
+                    pet_mood = "sleeping"
+                    msg = "🌙 Relax Mode active: volume lowered, wind down!"
+                else:
+                    msg = f"Switched to {mode_target.replace('_', ' ').title()} Mode"
+                return {"success": True, "intent": "mode", "action": "mode_switch", "mode": mode_target, "pet_mood": pet_mood, "message": msg, "speech": msg, "data": {}, "model": model_tag}
+
+            elif intent == "ask_pet":
+                import random
+                fortunes = [
+                    "Byte says: Drink some water, stretch your wrists, and squash that bug! 🐾",
+                    "Byte says: Clean code is good code. Let's conquer this sprint! 🚀",
+                    "Byte says: 100% focused! Ready to code alongside you. 💻",
+                    "Byte purrs happily and nudges your hand for pets! ❤️"
+                ]
+                quote = random.choice(fortunes)
+                return {"success": True, "intent": "ask_pet", "action": "pet_speech", "message": quote, "speech": quote, "pet_mood": "happy", "data": {}, "model": model_tag}
+
+    except Exception:
+        pass
+
     return None
 
 
@@ -498,6 +737,117 @@ def execute_nlp_command(raw_text: str) -> Dict[str, Any]:
         return action_mgmt_res
 
     # -------------------------------------------------------------
+    # 0.5. Ollama Local LLM Evaluation
+    # Attempts command classification using lightweight Ollama model
+    # -------------------------------------------------------------
+    ollama_res = execute_via_ollama(raw_text, query)
+    if ollama_res is not None:
+        return ollama_res
+
+    # -------------------------------------------------------------
+    # 0.6. Productivity Brain Dump & Quick Notes
+    # -------------------------------------------------------------
+    note_m = re.match(r"^(?:note|take a note|add note|remind me to|todo|add todo|write down)\s+(.+)", raw_text, re.IGNORECASE)
+    if note_m:
+        txt = note_m.group(1).strip()
+        item = notes_manager.add_note(txt, "task")
+        msg = f"Saved Note: \"{item['text']}\""
+        return {
+            "success": True,
+            "intent": "note",
+            "action": "note_saved",
+            "message": msg,
+            "speech": "Note saved to your brain dump.",
+            "data": item
+        }
+
+    # -------------------------------------------------------------
+    # 0.7. Developer Utilities (Kill Port)
+    # -------------------------------------------------------------
+    port_m = re.search(r"\b(?:kill|free|terminate|close)\s+(?:port|process on)\s+(\d{2,5})\b", query)
+    if port_m:
+        port = int(port_m.group(1))
+        res = system_controller.kill_port(port)
+        msg = res.get("message", f"Freed port {port}")
+        return {
+            "success": True,
+            "intent": "kill_port",
+            "action": "kill_port",
+            "message": msg,
+            "speech": msg,
+            "data": res
+        }
+
+    # -------------------------------------------------------------
+    # 0.8. Workspace Modes (Deep Work, Meeting, Gaming, Relax)
+    # -------------------------------------------------------------
+    if "deep work" in query or "focus mode" in query:
+        audio_manager.set_master_volume(35)
+        return {
+            "success": True,
+            "intent": "mode",
+            "action": "mode_switch",
+            "mode": "deep_work",
+            "pet_mood": "coding",
+            "message": "🧘 Deep Work active: distractions muted, focus started!",
+            "speech": "Deep work mode active. Happy coding!"
+        }
+    if "meeting mode" in query or "standup mode" in query:
+        audio_manager.set_mic_mute(False)
+        return {
+            "success": True,
+            "intent": "mode",
+            "action": "mode_switch",
+            "mode": "meeting",
+            "pet_mood": "meeting",
+            "message": "🎙️ Meeting Mode active: microphone live & ready!",
+            "speech": "Meeting mode active. Microphone is live."
+        }
+    if "gaming mode" in query or "game mode" in query:
+        audio_manager.set_master_volume(75)
+        return {
+            "success": True,
+            "intent": "mode",
+            "action": "mode_switch",
+            "mode": "gaming",
+            "pet_mood": "gaming",
+            "message": "🎮 Gaming Mode active: maximum audio performance!",
+            "speech": "Gaming mode active."
+        }
+    if "relax mode" in query or "wind down mode" in query:
+        audio_manager.set_master_volume(20)
+        return {
+            "success": True,
+            "intent": "mode",
+            "action": "mode_switch",
+            "mode": "relax",
+            "pet_mood": "sleeping",
+            "message": "🌙 Relax Mode active: volume lowered, wind down!",
+            "speech": "Relax mode active. Time to wind down."
+        }
+
+    # -------------------------------------------------------------
+    # 0.9. Pixel Pet Interaction (Ask Byte / Pet Advice)
+    # -------------------------------------------------------------
+    if any(w in query for w in ["ask pet", "pet advice", "pet fortune", "talk to byte", "what does byte say", "pet talk"]):
+        import random
+        fortunes = [
+            "Byte says: Drink some water, stretch your wrists, and squash that bug! 🐾",
+            "Byte says: Clean code is good code. Let's conquer this sprint! 🚀",
+            "Byte says: 100% focused! Ready to code alongside you. 💻",
+            "Byte purrs happily and nudges your hand for pets! ❤️"
+        ]
+        quote = random.choice(fortunes)
+        return {
+            "success": True,
+            "intent": "ask_pet",
+            "action": "pet_speech",
+            "pet_mood": "happy",
+            "message": quote,
+            "speech": quote
+        }
+
+    # -------------------------------------------------------------
     # 1. OBS Studio Controls
     # -------------------------------------------------------------
     if "obs" in query or "recording" in query or "stream" in query:
@@ -627,6 +977,21 @@ def execute_nlp_command(raw_text: str) -> Dict[str, Any]:
             "message": "Toggled Discord Deafen (Ctrl+F1)",
             "speech": "Toggled Discord deafen.",
             "data": {"hotkey": "Ctrl+F1"}
+        }
+
+    # 4.5. Global Microphone Mute
+    if any(m in query for m in ["mute mic", "unmute mic", "mute microphone", "unmute microphone", "mic mute", "microphone mute", "toggle mic"]):
+        should_mute = "unmute" not in query
+        res = audio_manager.set_mic_mute(should_mute)
+        is_m = res.get("muted", should_mute)
+        msg = "Microphone Muted" if is_m else "Microphone Live"
+        return {
+            "success": True,
+            "intent": "mic_mute",
+            "action": "mute" if is_m else "unmute",
+            "message": msg,
+            "speech": msg,
+            "data": res
         }
 
     # Mute / Unmute controls

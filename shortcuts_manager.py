@@ -51,8 +51,17 @@ SUGGESTED_SHORTCUTS = [
         "desc": "Toggle Discord Deafen / Undeafen (Ctrl+F1)",
         "icon": "headphones",
         "color": "#5865f2",
-        "type": "hotkey",
+        "type": "discord_deafen",
         "payload": {"keys": ["ctrl", "f1"]}
+    },
+    {
+        "id": "global_mic_mute",
+        "name": "Global Mic Mute",
+        "desc": "Mute or unmute default physical microphone",
+        "icon": "mic_off",
+        "color": "#f43f5e",
+        "type": "global_mic_mute",
+        "payload": {}
     },
     {
         "id": "obs_record",
@@ -283,6 +292,17 @@ def run_shortcut(shortcut_id: str) -> Dict[str, Any]:
             "success": True,
             "shortcut": s["name"],
             "message": "Toggled Discord Deafen (Ctrl+F1)"
+        }
+
+    elif stype in ("global_mic_mute", "mic_mute"):
+        import audio_manager
+        res = audio_manager.set_mic_mute()
+        is_m = res.get("muted", False)
+        return {
+            "success": True,
+            "shortcut": s["name"],
+            "details": res,
+            "message": "Microphone Muted" if is_m else "Microphone Live"
         }
 
     elif stype == "mute_master":

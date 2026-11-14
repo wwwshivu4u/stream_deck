@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environment & virtualenvs
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# SSL / TLS Private Keys & Certificates (Auto-generated at runtime)
+certs/
+*.pem
+*.key
+*.crt
+
+# Personal User Data (Runtime Notes & Scratchpads)
+notes.json
+
+# Operating System & Editor Files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log

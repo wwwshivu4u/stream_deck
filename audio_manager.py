@@ -112,3 +112,19 @@ def set_app_mute(pid: int, muted: Optional[bool] = None) -> Dict[str, Any]:
             if s.get("pid") == pid:
                 s["muted"] = res["muted"]
     return res
+
+
+def get_mic_state() -> Dict[str, Any]:
+    return _execute("get-mic")
+
+
+def set_mic_mute(muted: Optional[bool] = None) -> Dict[str, Any]:
+    global _cached_state
+    arg = "toggle"
+    if muted is not None:
+        arg = "true" if muted else "false"
+    res = _execute("mute-mic", arg)
+    if _cached_state and "mic" in _cached_state and "muted" in res:
+        _cached_state["mic"]["muted"] = res["muted"]
+    return res
+

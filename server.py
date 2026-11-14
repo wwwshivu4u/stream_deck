@@ -12,8 +12,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 
+import app_launcher
 import audio_manager
 import nlp_agent
+import notes_manager
 import shortcuts_manager
 import system_controller
 
@@ -23,7 +25,7 @@ app = FastAPI(title="Windows Web Volume Control")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -64,6 +66,28 @@ class WindowStackRequest(BaseModel):
     monitor: int = 2
     layout: str = "vertical"
     apps: Optional[List[Dict[str, str]]] = None
+
+
+class KillPortRequest(BaseModel):
+    port: int
+
+
+class KillProcessRequest(BaseModel):
+    pid: int
+
+
+class ClipboardRequest(BaseModel):
+    text: str
+
+
+class NoteRequest(BaseModel):
+    text: str
+    category: Optional[str] = "task"
+    priority: Optional[str] = "medium"
+
+
+class LaunchAppRequest(BaseModel):
+    target: str
 
 
 @app.exception_handler(Exception)
@@ -273,6 +297,189 @@ def nlp_execute_endpoint(req: NlpRequest):
     res = nlp_agent.execute_nlp_command(req.text)
     res["audio_state"] = audio_manager.get_audio_state()
     return res
+
+
+@app.post("/api/mic/mute")
+async def toggle_mic_mute_endpoint(request: Request):
+    try:
+        data = await request.json()
+        m = data.get("muted") if isinstance(data, dict) else None
+    except Exception:
+        m = None
+    return audio_manager.set_mic_mute(m)
+
+
+@app.get("/api/mic")
+def get_mic_endpoint():
+    return audio_manager.get_mic_state()
+
+
+@app.post("/api/discord/deafen")
+def toggle_discord_deafen_endpoint():
+    success = system_controller.send_hotkey(["ctrl", "f1"])
+    return {"success": success, "message": "Toggled Discord Deafen (Ctrl+F1)"}
+
+
+# -------------------------------------------------------------
+# System Telemetry & Utilities
+# -------------------------------------------------------------
+
+@app.get("/api/system/telemetry")
+def get_telemetry_endpoint():
+    telem = system_controller.get_system_telemetry()
+    try:
+        audio_st = audio_manager.get_audio_state()
+        master_info = audio_st.get("master", {})
+        sessions = audio_st.get("sessions", [])
+        telem["audio"] = {
+            "master_volume": master_info.get("volume", 100),
+            "master_muted": master_info.get("muted", False),
+            "sessions_count": len(sessions),
+            "active_sessions": [s.get("name") for s in sessions if not s.get("muted") and s.get("name")]
+        }
+    except Exception:
+        telem["audio"] = {
+            "master_volume": 100,
+            "master_muted": False,
+            "sessions_count": 0,
+            "active_sessions": []
+        }
+    return telem
+
+
+@app.get("/api/system/ports")
+def get_ports_endpoint():
+    ports_meta = system_controller.get_active_listening_ports_metadata()
+    suspicious_count = sum(1 for p in ports_meta if p.get("security_level") == "suspicious")
+    exposed_count = sum(1 for p in ports_meta if p.get("security_level") == "exposed")
+    safe_count = sum(1 for p in ports_meta if p.get("security_level") == "safe")
+    system_count = sum(1 for p in ports_meta if p.get("security_level") == "system")
+    return {
+        "ports": ports_meta,
+        "count": len(ports_meta),
+        "suspicious_count": suspicious_count,
+        "exposed_count": exposed_count,
+        "safe_count": safe_count,
+        "system_count": system_count
+    }
+
+
+@app.post("/api/system/kill-port")
+def kill_port_endpoint(req: KillPortRequest):
+    return system_controller.kill_port(req.port)
+
+
+@app.post("/api/system/kill-process")
+def kill_process_endpoint(req: KillProcessRequest):
+    return system_controller.kill_process_by_pid(req.pid)
+
+
+@app.post("/api/system/clean-ram")
+def clean_ram_endpoint():
+    return system_controller.clean_ram()
+
+
+@app.get("/api/clipboard")
+def get_clipboard_endpoint():
+    return {"text": system_controller.get_clipboard_text()}
+
+
+@app.post("/api/clipboard")
+def set_clipboard_endpoint(req: ClipboardRequest):
+    success = system_controller.set_clipboard_text(req.text)
+    return {"success": success}
+
+
+# -------------------------------------------------------------
+# Quick Notes & Brain Dump
+# -------------------------------------------------------------
+
+@app.get("/api/notes")
+def get_notes_endpoint():
+    return notes_manager.load_notes()
+
+
+@app.post("/api/notes")
+def add_note_endpoint(req: NoteRequest):
+    return notes_manager.add_note(req.text, req.category or "task", req.priority or "medium")
+
+
+@app.post("/api/notes/{note_id}/toggle")
+def toggle_note_endpoint(note_id: str):
+    res = notes_manager.toggle_note(note_id)
+    return {"success": res is not None, "note": res}
+
+
+@app.delete("/api/notes/{note_id}")
+def delete_note_endpoint(note_id: str):
+    success = notes_manager.delete_note(note_id)
+    return {"success": success}
+
+
+@app.post("/api/notes/tidy")
+def tidy_notes_endpoint():
+    return notes_manager.ai_tidy_notes()
+
+
+@app.get("/api/notes/export")
+def export_notes_endpoint():
+    return {"markdown": notes_manager.export_markdown()}
+
+
+@app.post("/api/notes/clear-done")
+def clear_done_notes_endpoint():
+    cleared = notes_manager.clear_done_notes()
+    return {"success": True, "cleared": cleared}
+
+
+# -------------------------------------------------------------
+# Windows App Launcher Endpoints
+# -------------------------------------------------------------
+
+@app.get("/api/apps")
+def get_apps_endpoint():
+    return app_launcher.get_available_apps()
+
+
+@app.post("/api/apps/launch")
+def launch_app_endpoint(req: LaunchAppRequest):
+    return app_launcher.launch_app(req.target)
+
+
+# -------------------------------------------------------------
+# Workspace Context Modes
+# -------------------------------------------------------------
+
+@app.post("/api/modes/{mode}")
+def activate_mode_endpoint(mode: str):
+    m = mode.lower()
+    pet_mood = "idle"
+    if m in ("deep_work", "focus"):
+        audio_manager.set_master_volume(35)
+        pet_mood = "coding"
+        msg = "🧘 Deep Work active: distractions muted, focus started!"
+    elif m in ("meeting", "standup"):
+        audio_manager.set_mic_mute(False)
+        pet_mood = "meeting"
+        msg = "🎙️ Meeting Mode active: microphone live & ready!"
+    elif m in ("gaming", "game"):
+        audio_manager.set_master_volume(75)
+        pet_mood = "gaming"
+        msg = "🎮 Gaming Mode active: maximum audio performance!"
+    elif m in ("relax", "wind_down"):
+        audio_manager.set_master_volume(20)
+        pet_mood = "sleeping"
+        msg = "🌙 Relax Mode active: volume lowered, wind down!"
+    else:
+        msg = f"Switched to {mode.replace('_', ' ').title()} Mode"
+
+    return {
+        "success": True,
+        "mode": m,
+        "message": msg,
+        "pet_mood": pet_mood,
+        "audio_state": audio_manager.get_audio_state()
+    }
 
 
 @app.post("/api/master")

@@ -128,6 +128,26 @@ namespace WebVolumeControl
             return dev;
         }
 
+        private static IMMDevice GetDefaultCaptureDevice()
+        {
+            try
+            {
+                var enumerator = (IMMDeviceEnumerator)new MMDeviceEnumeratorComObject();
+                IMMDevice dev;
+                int hr = enumerator.GetDefaultAudioEndpoint(1, 1, out dev);
+                if (hr != 0 || dev == null)
+                {
+                    hr = enumerator.GetDefaultAudioEndpoint(1, 2, out dev);
+                }
+                if (hr != 0 || dev == null) return null;
+                return dev;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private static IAudioEndpointVolume GetMasterEndpointVolume(IMMDevice dev)
         {
             Guid iid = typeof(IAudioEndpointVolume).GUID;
@@ -305,9 +325,74 @@ namespace WebVolumeControl
 
                     sessionsSb.Append("]");
 
+                    float micVol = 1.0f;
+                    bool micMuted = false;
+                    bool hasMic = false;
+                    try
+                    {
+                        var capDev = GetDefaultCaptureDevice();
+                        if (capDev != null)
+                        {
+                            var micMaster = GetMasterEndpointVolume(capDev);
+                            if (micMaster != null)
+                            {
+                                micMaster.GetMasterVolumeLevelScalar(out micVol);
+                                micMaster.GetMute(out micMuted);
+                                hasMic = true;
+                            }
+                        }
+                    }
+                    catch { }
+                    int micPct = (int)Math.Round(micVol * 100);
+
                     Console.WriteLine(string.Format(CultureInfo.InvariantCulture,
-                        "{{\"master\":{{\"volume\":{0},\"muted\":{1}}},\"sessions\":{2}}}",
-                        masterPct, masterMuted ? "true" : "false", sessionsSb.ToString()));
+                        "{{\"master\":{{\"volume\":{0},\"muted\":{1}}},\"mic\":{{\"volume\":{3},\"muted\":{4},\"available\":{5}}},\"sessions\":{2}}}",
+                        masterPct, masterMuted ? "true" : "false", sessionsSb.ToString(), micPct, micMuted ? "true" : "false", hasMic ? "true" : "false"));
+                }
+                else if (cmd == "get-mic")
+                {
+                    var capDev = GetDefaultCaptureDevice();
+                    if (capDev != null)
+                    {
+                        var micMaster = GetMasterEndpointVolume(capDev);
+                        if (micMaster != null)
+                        {
+                            float vol = 1.0f;
+                            bool muted = false;
+                            micMaster.GetMasterVolumeLevelScalar(out vol);
+                            micMaster.GetMute(out muted);
+                            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{{\"success\":true,\"volume\":{0},\"muted\":{1}}}", (int)Math.Round(vol * 100), muted ? "true" : "false"));
+                            return;
+                        }
+                    }
+                    Console.WriteLine("{\"success\":false,\"error\":\"No microphone found\"}");
+                    return;
+                }
+                else if (cmd == "mute-mic")
+                {
+                    var capDev = GetDefaultCaptureDevice();
+                    if (capDev != null)
+                    {
+                        var micMaster = GetMasterEndpointVolume(capDev);
+                        if (micMaster != null)
+                        {
+                            bool hasExplicit = args.Length >= 2;
+                            bool explicitMute = false;
+                            if (hasExplicit)
+                            {
+                                string arg = args[1].ToLowerInvariant();
+                                explicitMute = (arg == "true" || arg == "1");
+                            }
+                            bool cur = false;
+                            micMaster.GetMute(out cur);
+                            bool newMute = hasExplicit ? explicitMute : !cur;
+                            micMaster.SetMute(newMute, ref emptyGuid);
+                            Console.WriteLine(string.Format(CultureInfo.InvariantCulture, "{{\"success\":true,\"muted\":{0}}}", newMute ? "true" : "false"));
+                            return;
+                        }
+                    }
+                    Console.WriteLine("{\"success\":false,\"error\":\"No microphone found\"}");
+                    return;
                 }
                 else if (cmd == "set-master")
                 {
