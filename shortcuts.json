@@ -38,6 +38,17 @@
     }
   },
   {
+    "id": "launch_spotify",
+    "name": "Open Spotify",
+    "desc": "Launches Spotify music player",
+    "icon": "music",
+    "color": "#1db954",
+    "type": "command",
+    "payload": {
+      "cmd": "spotify.exe"
+    }
+  },
+  {
     "id": "media_play_pause",
     "name": "Play / Pause",
     "desc": "Toggle media playback",
@@ -75,17 +86,6 @@
         "win",
         "d"
       ]
-    }
-  },
-  {
-    "id": "launch_spotify",
-    "name": "Open Spotify",
-    "desc": "Launches Spotify music player",
-    "icon": "music",
-    "color": "#1db954",
-    "type": "command",
-    "payload": {
-      "cmd": "spotify.exe"
     }
   },
   {

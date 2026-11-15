@@ -51,6 +51,50 @@ def _execute(*args: str) -> Dict[str, Any]:
         return {"master": {"volume": 100, "muted": False}, "sessions": [], "error": str(ex)}
 
 
+def is_spotify_name(name: Optional[str], display_name: Optional[str] = None) -> bool:
+    """Returns True if the given process name or window display name is Spotify."""
+    n = (name or "").lower()
+    d = (display_name or "").lower()
+    return "spotify" in n or "spotify" in d
+
+
+def is_spotify_pid(pid: int) -> bool:
+    """Checks whether a given PID belongs to an active Spotify audio session."""
+    global _cached_state
+    if _cached_state and "sessions" in _cached_state:
+        for s in _cached_state["sessions"]:
+            if s.get("pid") == pid:
+                return bool(s.get("isSpotify") or is_spotify_name(s.get("name"), s.get("displayName")))
+    return False
+
+
+def spotify_linear_to_perceptual(vol: float) -> int:
+    """
+    Converts Windows WASAPI linear amplitude (0..100) to Spotify's perceptual
+    cubic volume slider curve (0..100).
+    Spotify maps: amplitude = (slider / 100)^3
+    Therefore: slider = 100 * (amplitude / 100)^(1/3)
+    """
+    if vol <= 0.0:
+        return 0
+    if vol >= 100.0:
+        return 100
+    return max(0, min(100, int(round(((vol / 100.0) ** (1.0 / 3.0)) * 100.0))))
+
+
+def spotify_perceptual_to_linear(slider: float) -> float:
+    """
+    Converts Spotify's perceptual cubic volume slider position (0..100)
+    to Windows WASAPI linear amplitude (0..100).
+    amplitude = 100 * (slider / 100)^3
+    """
+    if slider <= 0.0:
+        return 0.0
+    if slider >= 100.0:
+        return 100.0
+    return max(0.0, min(100.0, ((slider / 100.0) ** 3.0) * 100.0))
+
+
 def get_audio_state(force: bool = False) -> Dict[str, Any]:
     global _cached_state, _cache_time
     now = time.time()
@@ -59,6 +103,15 @@ def get_audio_state(force: bool = False) -> Dict[str, Any]:
 
     state = _execute("get")
     if "master" in state:
+        if "sessions" in state and isinstance(state["sessions"], list):
+            for s in state["sessions"]:
+                if is_spotify_name(s.get("name"), s.get("displayName")):
+                    s["isSpotify"] = True
+                    # If AudioEngine hasn't calculated perceptual volume, compute it
+                    if "rawVolume" not in s:
+                        raw = float(s.get("volume", 0)) / 100.0
+                        s["rawVolume"] = raw
+                        s["volume"] = spotify_linear_to_perceptual(float(s.get("volume", 0)))
         _cached_state = state
         _cache_time = now
     elif _cached_state:
@@ -93,11 +146,20 @@ def set_master_mute(muted: Optional[bool] = None) -> Dict[str, Any]:
 def set_app_volume(pid: int, volume: int) -> Dict[str, Any]:
     global _cached_state
     vol = max(0, min(100, int(volume)))
-    res = _execute("set-app", str(pid), str(vol))
+    is_spotify = is_spotify_pid(pid)
+    
+    cmd_args = ["set-app", str(pid), str(vol)]
+    if is_spotify:
+        cmd_args.append("cubic")
+
+    res = _execute(*cmd_args)
     if _cached_state and "sessions" in _cached_state:
         for s in _cached_state["sessions"]:
             if s.get("pid") == pid:
                 s["volume"] = vol
+                if is_spotify:
+                    s["isSpotify"] = True
+                    s["rawVolume"] = round(((vol / 100.0) ** 3.0), 4)
     return res
 
 

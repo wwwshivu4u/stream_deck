@@ -301,12 +301,36 @@ namespace WebVolumeControl
                                                 dispName = appName;
                                             }
 
+                                            bool isSpotify = (appName != null && appName.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0)
+                                                || (dispName != null && dispName.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0);
+
+                                            int volPct = (int)Math.Round(appVol * 100.0f);
+                                            if (isSpotify)
+                                            {
+                                                if (appVol <= 0.00001f)
+                                                {
+                                                    volPct = 0;
+                                                }
+                                                else if (appVol >= 0.9999f)
+                                                {
+                                                    volPct = 100;
+                                                }
+                                                else
+                                                {
+                                                    // Spotify desktop maps slider S (0..1) to amplitude A = S^3
+                                                    // Inverting to get perceptual slider position: S = A^(1/3)
+                                                    volPct = (int)Math.Round(Math.Pow((double)appVol, 1.0 / 3.0) * 100.0);
+                                                    if (volPct > 100) volPct = 100;
+                                                    if (volPct < 0) volPct = 0;
+                                                }
+                                            }
+
                                             if (!isFirst) sessionsSb.Append(",");
                                             isFirst = false;
 
                                             sessionsSb.Append(string.Format(CultureInfo.InvariantCulture,
-                                                "{{\"pid\":{0},\"name\":\"{1}\",\"displayName\":\"{2}\",\"volume\":{3},\"muted\":{4}}}",
-                                                pid, EscapeJsonString(appName), EscapeJsonString(dispName), (int)Math.Round(appVol * 100), appMuted ? "true" : "false"));
+                                                "{{\"pid\":{0},\"name\":\"{1}\",\"displayName\":\"{2}\",\"volume\":{3},\"rawVolume\":{4:F4},\"isSpotify\":{5},\"muted\":{6}}}",
+                                                pid, EscapeJsonString(appName), EscapeJsonString(dispName), volPct, appVol, isSpotify ? "true" : "false", appMuted ? "true" : "false"));
                                         }
                                     }
                                     catch { }
@@ -424,6 +448,8 @@ namespace WebVolumeControl
                     vol = Math.Max(0, Math.Min(100, vol));
                     float scalar = vol / 100.0f;
 
+                    bool forceCubic = args.Length >= 4 && args[3].Equals("cubic", StringComparison.OrdinalIgnoreCase);
+
                     var mgr = GetAudioSessionManager(dev);
                     if (mgr != null)
                     {
@@ -441,14 +467,47 @@ namespace WebVolumeControl
                                     {
                                         object obj = Marshal.GetObjectForIUnknown(pSession);
                                         var ctl2 = obj as IAudioSessionControl2;
+                                        var ctl = obj as IAudioSessionControl;
                                         uint pid = 0;
                                         if (ctl2 != null) ctl2.GetProcessId(out pid);
                                         if (pid == targetPid)
                                         {
+                                            bool isSpotify = forceCubic;
+                                            if (!isSpotify)
+                                            {
+                                                string pName = "";
+                                                try
+                                                {
+                                                    var proc = Process.GetProcessById((int)pid);
+                                                    pName = proc.ProcessName;
+                                                }
+                                                catch { }
+
+                                                string dName = "";
+                                                if (ctl != null)
+                                                {
+                                                    try { ctl.GetDisplayName(out dName); } catch { }
+                                                }
+
+                                                if ((pName != null && pName.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                                    (dName != null && dName.IndexOf("spotify", StringComparison.OrdinalIgnoreCase) >= 0))
+                                                {
+                                                    isSpotify = true;
+                                                }
+                                            }
+
+                                            float finalScalar = scalar;
+                                            if (isSpotify)
+                                            {
+                                                // Spotify cubic audio taper: amplitude = (slider/100)^3
+                                                float s = vol / 100.0f;
+                                                finalScalar = s * s * s;
+                                            }
+
                                             var sav = obj as ISimpleAudioVolume;
                                             if (sav != null)
                                             {
-                                                sav.SetMasterVolume(scalar, ref emptyGuid);
+                                                sav.SetMasterVolume(finalScalar, ref emptyGuid);
                                             }
                                         }
                                     }

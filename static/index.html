@@ -1659,6 +1659,31 @@
       font-weight: 600;
     }
 
+    .spotify-curve-tag {
+      font-size: 0.6rem;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(29, 185, 84, 0.2);
+      color: #1ed760;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .app-tile.is-spotify {
+      border-color: rgba(29, 185, 84, 0.35);
+    }
+    .app-tile.is-spotify .volume-fill-bg {
+      background: linear-gradient(90deg, rgba(29, 185, 84, 0.15) 0%, rgba(29, 185, 84, 0.35) 100%);
+      border-right-color: rgba(30, 215, 96, 0.8);
+    }
+    .app-tile.is-spotify .tile-slider-fill {
+      background: linear-gradient(90deg, #10b981 0%, #1ed760 100%);
+    }
+    .app-tile.is-spotify .tile-slider-thumb {
+      box-shadow: 0 0 8px rgba(30, 215, 96, 0.8);
+    }
+
     /* Shortcuts Grid & Cards */
     .shortcuts-grid {
       display: grid;
@@ -4163,7 +4188,7 @@
       activeTileElement.classList.add('is-sliding');
       if (sliderHud) {
         sliderHud.classList.add('active');
-        updateHudUI(activeTarget.currentVol, activeTarget.name, activeTarget.muted);
+        updateHudUI(activeTarget.currentVol, activeTarget.name, activeTarget.muted, activeTarget.isSpotify);
       }
     }
 
@@ -4194,7 +4219,7 @@
           } else {
             updateAppTileLive(activeTarget.pid, newVol, activeTarget.muted);
           }
-          updateHudUI(newVol, activeTarget.name, activeTarget.muted);
+          updateHudUI(newVol, activeTarget.name, activeTarget.muted, activeTarget.isSpotify);
           sendLiveVolume(activeTarget.type, activeTarget.pid, newVol);
         }
       }
@@ -4223,9 +4248,11 @@
       hasMovedNoticeably = false;
     }
 
-    function updateHudUI(vol, name, muted) {
+    function updateHudUI(vol, name, muted, isSpotify = false) {
       if (!sliderHud) return;
-      if (hudName) hudName.textContent = name || 'Volume';
+      if (hudName) {
+        hudName.textContent = isSpotify ? `${name || 'Spotify'} • Spotify Curve` : (name || 'Volume');
+      }
       if (hudVol) hudVol.textContent = muted ? 'MUTED' : `${vol}%`;
     }
 
@@ -4393,9 +4420,10 @@
       sorted.forEach((app, index) => {
         const pid = app.pid;
         const isRecent = index < 3 && (recency[app.name] || 0) > 0;
+        const isSpotify = Boolean(app.isSpotify || (app.name && app.name.toLowerCase().includes('spotify')) || (app.displayName && app.displayName.toLowerCase().includes('spotify')));
 
         const tile = document.createElement('div');
-        tile.className = `app-tile ${app.muted ? 'is-muted' : ''}`;
+        tile.className = `app-tile ${app.muted ? 'is-muted' : ''} ${isSpotify ? 'is-spotify' : ''}`;
         tile.id = `app-tile-${pid}`;
 
         tile.innerHTML = `
@@ -4410,7 +4438,7 @@
             <div class="app-title-text" title="${app.displayName}">${app.displayName}</div>
             <div class="app-sub-text">
               <span>${app.name}</span>
-              ${isRecent ? '<span class="recent-tag">Recent</span>' : ''}
+              ${isSpotify ? '<span class="spotify-curve-tag" title="Spotify perceptual volume curve active (Audio Taper)">Spotify Curve</span>' : (isRecent ? '<span class="recent-tag">Recent</span>' : '')}
             </div>
           </div>
           <div class="tile-slider-bar">
@@ -4429,6 +4457,7 @@
             type: 'app',
             pid: pid,
             name: app.displayName || app.name,
+            isSpotify: isSpotify,
             startVol: app.volume,
             currentVol: app.volume,
             muted: app.muted
