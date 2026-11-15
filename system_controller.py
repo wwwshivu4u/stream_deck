@@ -619,24 +619,76 @@ def get_uptime_telemetry() -> Dict[str, Any]:
         return {"seconds": 0, "hours": 0, "minutes": 0, "formatted": "0h 0m"}
 
 
-def get_peripherals_telemetry() -> List[Dict[str, Any]]:
-    """Returns connected peripheral battery and connection health."""
-    return [
-        {"id": "headphones", "name": "Wireless Headset", "icon": "headphones", "battery": 88, "status": "Active"},
-        {"id": "mouse", "name": "Wireless Mouse", "icon": "mouse", "battery": 92, "status": "Active"},
-        {"id": "controller", "name": "Gamepad Controller", "icon": "gamepad", "battery": 75, "status": "Standby"}
+CRITICAL_SYSTEM_PROCESSES = {
+    "system", "system idle process", "ntoskrnl.exe", "csrss.exe", "lsass.exe",
+    "services.exe", "smss.exe", "wininit.exe", "svchost.exe", "spoolsv.exe",
+    "winlogon.exe", "explorer.exe", "dwm.exe", "searchindexer.exe", "dashost.exe",
+    "sihost.exe", "fontdrvhost.exe", "runtimebroker.exe", "shellexperiencehost.exe",
+    "msmpeng.exe", "securityhealthservice.exe", "wlanext.exe", "wlms.exe", "ibtsiva.exe",
+    "audiodg.exe"
+}
+
+
+class PROCESSENTRY32W(ctypes.Structure):
+    _fields_ = [
+        ("dwSize", wintypes.DWORD),
+        ("cntUsage", wintypes.DWORD),
+        ("th32ProcessID", wintypes.DWORD),
+        ("th32DefaultHeapID", ctypes.c_size_t),
+        ("th32ModuleID", wintypes.DWORD),
+        ("cntThreads", wintypes.DWORD),
+        ("th32ParentProcessID", wintypes.DWORD),
+        ("pcPriClassBase", ctypes.c_long),
+        ("dwFlags", wintypes.DWORD),
+        ("szExeFile", ctypes.c_wchar * 260),
     ]
+
+
+_process_name_cache: Dict[int, str] = {}
+_process_cache_time: float = 0.0
+
+
+def get_process_names_snapshot(ttl: float = 3.0) -> Dict[int, str]:
+    """Retrieves a system-wide PID -> process name dictionary using Toolhelp32 API."""
+    global _process_name_cache, _process_cache_time
+    now = time.time()
+    if _process_name_cache and (now - _process_cache_time < ttl):
+        return _process_name_cache
+
+    cache: Dict[int, str] = {0: "System Idle Process", 4: "System"}
+    try:
+        h = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)
+        if h and h != -1:
+            pe = PROCESSENTRY32W()
+            pe.dwSize = ctypes.sizeof(PROCESSENTRY32W)
+            if kernel32.Process32FirstW(h, ctypes.byref(pe)):
+                while True:
+                    cache[pe.th32ProcessID] = pe.szExeFile
+                    if not kernel32.Process32NextW(h, ctypes.byref(pe)):
+                        break
+            kernel32.CloseHandle(h)
+    except Exception:
+        pass
+
+    _process_name_cache = cache
+    _process_cache_time = now
+    return cache
 
 
 def get_process_info_by_pid(pid: int) -> Dict[str, str]:
     """Retrieves process executable name and full path for a given PID."""
     if pid <= 4:
         return {"name": "System" if pid == 4 else "System Idle", "path": "C:\\Windows\\System32\\ntoskrnl.exe"}
-    
+
+    snapshot = get_process_names_snapshot()
+    snapshot_name = snapshot.get(pid, "")
+
     PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
     h_proc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
     if not h_proc:
-        return {"name": f"PID {pid}", "path": ""}
+        name = snapshot_name or f"PID {pid}"
+        path = f"C:\\Windows\\System32\\{name}" if name.lower() in CRITICAL_SYSTEM_PROCESSES else ""
+        return {"name": name, "path": path}
     try:
         buf = ctypes.create_unicode_buffer(1024)
         size = wintypes.DWORD(1024)
@@ -646,9 +698,13 @@ def get_process_info_by_pid(pid: int) -> Dict[str, str]:
                 "name": os.path.basename(full_path),
                 "path": full_path
             }
-        return {"name": f"PID {pid}", "path": ""}
+        name = snapshot_name or f"PID {pid}"
+        path = f"C:\\Windows\\System32\\{name}" if name.lower() in CRITICAL_SYSTEM_PROCESSES else ""
+        return {"name": name, "path": path}
     except Exception:
-        return {"name": f"PID {pid}", "path": ""}
+        name = snapshot_name or f"PID {pid}"
+        path = f"C:\\Windows\\System32\\{name}" if name.lower() in CRITICAL_SYSTEM_PROCESSES else ""
+        return {"name": name, "path": path}
     finally:
         kernel32.CloseHandle(h_proc)
 
@@ -656,7 +712,8 @@ def get_process_info_by_pid(pid: int) -> Dict[str, str]:
 def classify_port_security(port: int, pid: int, proc_name: str, proc_path: str, local_addr: str) -> Dict[str, Any]:
     """
     Evaluates listening socket security, public/LAN network exposure,
-    and flags suspicious processes, malware/backdoor ports, and exposed database/debug services.
+    and accurately classifies this active application, Windows Core Services,
+    developer servers, and actual security threats.
     """
     pname = (proc_name or "").lower()
     ppath = (proc_path or "").lower()
@@ -664,94 +721,211 @@ def classify_port_security(port: int, pid: int, proc_name: str, proc_path: str, 
     is_public = addr.startswith("0.0.0.0") or addr.startswith("[::]") or addr.startswith("*") or addr == ""
     is_loopback = "127.0.0.1" in addr or "::1" in addr or "localhost" in addr
 
-    # 1. Known malware / exploit / trojan / backdoor ports
+    # -------------------------------------------------------------
+    # 0. THIS APPLICATION (Active Volume Cockpit Server)
+    # -------------------------------------------------------------
+    try:
+        current_pid = os.getpid()
+    except Exception:
+        current_pid = -1
+
+    is_this_app = (pid == current_pid) or (
+        current_pid > 0 and pname.startswith("python") and any(d in ppath for d in ["volume_control", "server.py"])
+    )
+
+    if is_this_app:
+        return {
+            "level": "app",
+            "badge": "💎 THIS APP",
+            "reason": "Active host process running this Volume Control & PC Cockpit application"
+        }
+
+    # -------------------------------------------------------------
+    # 1. MALICIOUS / SPOOFED / ROGUE PROCESSES (Check First)
+    # -------------------------------------------------------------
+    fake_system_names = ["svch0st.exe", "scvhost.exe", "csrsss.exe", "lsasss.exe", "taskmrg.exe", "winlog0n.exe"]
+    if pname in fake_system_names:
+        return {
+            "level": "suspicious",
+            "badge": "🚨 MALWARE",
+            "reason": f"Masqueraded system process name ({proc_name})"
+        }
+    if "svchost" in pname and ppath and not any(s in ppath for s in [r"windows\system32", r"windows\syswow64"]):
+        return {
+            "level": "suspicious",
+            "badge": "🚨 SUSPICIOUS",
+            "reason": f"svchost.exe running from unauthorized path: {proc_path}"
+        }
+
+    # -------------------------------------------------------------
+    # 2. CORE WINDOWS SYSTEM SERVICES (Protected & Trusted)
+    # -------------------------------------------------------------
+    is_sys_proc = (
+        pid <= 4
+        or (ppath and any(s in ppath for s in [r"windows\system32", r"windows\syswow64"]))
+        or (not ppath and (pname in CRITICAL_SYSTEM_PROCESSES or "svchost" in pname))
+    )
+
+    if is_sys_proc:
+        if port == 445:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows File & Printer Sharing (SMB - protected by Windows Firewall)"
+            }
+        if port == 139:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows NetBIOS Session Service (Standard Windows LAN protocol)"
+            }
+        if port == 135:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows RPC Endpoint Mapper (RPCSS - protected by Windows Firewall)"
+            }
+        if port == 5357:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows Web Services for Devices (WSDAPI - network printer & device discovery)"
+            }
+        if port == 7680:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows Update Delivery Optimization (WUDO P2P update distribution)"
+            }
+        if port == 5040:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": "Windows Connected Devices Service"
+            }
+        if 49152 <= port <= 65535:
+            return {
+                "level": "system",
+                "badge": "🛡️ SYSTEM",
+                "reason": f"Windows RPC Dynamic Service Port ({proc_name})"
+            }
+        return {
+            "level": "system",
+            "badge": "🛡️ SYSTEM",
+            "reason": f"Protected Windows core operating system service ({proc_name})"
+        }
+
+    # -------------------------------------------------------------
+    # 3. KNOWN EXPLOIT & TROJAN BACKDOOR PORTS
+    # -------------------------------------------------------------
     known_malware_ports = {
         4444: "Metasploit default listener / potential reverse shell payload",
-        5555: "Android ADB remote debug bridge / potential backdoor target",
         6666: "IRC botnet command & control channel",
         6667: "IRC botnet command & control channel",
         31337: "Back Orifice trojan backdoor port",
         12345: "NetBus remote access trojan port",
         23: "Insecure unencrypted Telnet service (plaintext credentials)",
         21: "Insecure unencrypted FTP service (plaintext credentials)",
-        69: "Insecure TFTP service (unauthenticated file transfer)",
-        9999: "Unsecured remote debugging bridge / suspicious listener",
-        1337: "Common exploit payload / hacker listener port"
+        69: "Insecure TFTP service (unauthenticated file transfer)"
     }
     if port in known_malware_ports:
         return {
             "level": "suspicious",
-            "badge": "🚨 SUSPICIOUS",
+            "badge": "🚨 HIGH RISK",
             "reason": known_malware_ports[port]
         }
 
-    # 2. Suspicious executable paths (Temp, Downloads, AppData Temp)
-    if any(t in ppath for t in [r"appdata\local\temp", r"windows\temp", r"\temp\\", r"\downloads\\"]):
+    # -------------------------------------------------------------
+    # 4. LEGITIMATE DEVELOPER & TOOL SOCKETS
+    # -------------------------------------------------------------
+    if port == 1337 or "rzsdk" in pname or "razer" in pname:
+        is_razer = "rzsdk" in pname or "razer" in pname or "razer" in ppath
         return {
-            "level": "suspicious",
-            "badge": "🚨 SUSPICIOUS",
-            "reason": f"Process executing from Temp/Downloads: {os.path.basename(proc_path) or proc_name}"
+            "level": "exposed" if is_public else "safe",
+            "badge": "⚠️ LAN EXPOSED" if is_public else ("3RD-PARTY (RAZER)" if is_razer else "🟢 DEV TOOL"),
+            "reason": "External 3rd-party daemon: Razer Chroma SDK Server (Port 1337 - not used by this app)" if is_razer else "Strapi Headless CMS or local Node.js development server (Port 1337)"
+        }
+    if port == 5555 or "adb" in pname:
+        return {
+            "level": "exposed" if is_public else "safe",
+            "badge": "⚠️ DEV BRIDGE" if is_public else "🟢 DEV TOOL",
+            "reason": "Android Debug Bridge (ADB) listening socket for device emulation"
+        }
+    if port == 5037:
+        return {
+            "level": "safe",
+            "badge": "🟢 DEV TOOL",
+            "reason": "Android Debug Bridge (ADB) local server daemon"
+        }
+    if port in (8000, 8088) or "volume" in pname:
+        return {
+            "level": "exposed" if is_public else "safe",
+            "badge": "⚠️ LAN EXPOSED" if is_public else "🟢 SAFE LOCAL",
+            "reason": "Volume Control & PC Cockpit Web Server"
+        }
+    if port in (5173, 5174, 3000, 3001, 4200, 5000, 8080) or any(d in pname for d in ("node", "vite", "python", "code", "npm")):
+        return {
+            "level": "exposed" if is_public else "safe",
+            "badge": "⚠️ LAN EXPOSED" if is_public else "🟢 DEV SERVER",
+            "reason": "Active local development server (" + ("Exposed to Wi-Fi/LAN" if is_public else "Isolated to localhost") + ")"
+        }
+    if port in (6463, 6464) or "discord" in pname:
+        return {
+            "level": "safe",
+            "badge": "🟢 SAFE LOCAL",
+            "reason": "Discord Local RPC connection socket"
+        }
+    if port == 11434 or "ollama" in pname:
+        return {
+            "level": "exposed" if is_public else "safe",
+            "badge": "⚠️ LAN EXPOSED" if is_public else "🟢 AI SERVICE",
+            "reason": "Ollama Local AI model API service"
         }
 
-    # 3. Spoofed or suspicious system process names
-    fake_system_names = ["svch0st.exe", "scvhost.exe", "csrsss.exe", "lsasss.exe", "taskmrg.exe", "winlog0n.exe"]
-    if pname in fake_system_names:
-        return {
-            "level": "suspicious",
-            "badge": "🚨 SUSPICIOUS",
-            "reason": f"Suspicious masqueraded process name ({proc_name})"
-        }
-    if "svchost.exe" in pname and ppath and not any(s in ppath for s in [r"windows\system32", r"windows\syswow64"]):
-        return {
-            "level": "suspicious",
-            "badge": "🚨 SUSPICIOUS",
-            "reason": f"svchost.exe running outside Windows System32: {proc_path}"
-        }
-
-    # 4. Critical database / debug services bound to 0.0.0.0 (High Risk)
+    # -------------------------------------------------------------
+    # 5. PUBLIC DATABASE / DEBUGGER EXPOSURE (High Risk)
+    # -------------------------------------------------------------
     if is_public:
-        if port == 6379:
+        if port == 6379 or "redis" in pname:
             return {
                 "level": "suspicious",
-                "badge": "🚨 HIGH RISK",
-                "reason": "Redis cache bound to 0.0.0.0 (Public RCE vulnerability risk without password)"
+                "badge": "🚨 EXPOSED DB",
+                "reason": "Redis database bound to 0.0.0.0 without localhost binding (Remote access risk)"
             }
         if port in (5005, 9229):
             return {
                 "level": "suspicious",
-                "badge": "🚨 HIGH RISK",
+                "badge": "🚨 EXPOSED DEBUG",
                 "reason": "Remote debugger open to network (Allows arbitrary code execution)"
             }
-        if port == 27017:
+        if port == 27017 or "mongo" in pname:
             return {
                 "level": "suspicious",
-                "badge": "🚨 HIGH RISK",
-                "reason": "MongoDB database exposed to 0.0.0.0 without localhost binding"
-            }
-        if port in (135, 445, 139):
-            return {
-                "level": "suspicious",
-                "badge": "🚨 HIGH RISK",
-                "reason": "Windows SMB / NetBIOS exposed on public interface (EternalBlue/WannaCry vector)"
+                "badge": "🚨 EXPOSED DB",
+                "reason": "MongoDB database exposed to 0.0.0.0 without localhost restriction"
             }
 
-    # 5. Core Windows System Services
-    if pid <= 4 or ("svchost" in pname and ("system32" in ppath or not ppath)):
+    # -------------------------------------------------------------
+    # 6. EXECUTABLES RUNNING FROM TEMP / DOWNLOADS
+    # -------------------------------------------------------------
+    is_dev_runtime = any(r in pname for r in ["python", "node", "electron", "go", "cargo", "rust", "code", "git"])
+    if not is_dev_runtime and any(t in ppath for t in [r"windows\temp", r"\temp\\"]):
         return {
-            "level": "system",
-            "badge": "🛡️ SYSTEM",
-            "reason": "Protected Windows core operating system service"
+            "level": "suspicious",
+            "badge": "🚨 SUSPICIOUS",
+            "reason": f"Unknown executable running from Temp directory: {os.path.basename(proc_path) or proc_name}"
         }
 
-    # 6. LAN / Public Network Exposure
+    # -------------------------------------------------------------
+    # 7. GENERAL LAN EXPOSURE vs LOCALHOST ISOLATION
+    # -------------------------------------------------------------
     if is_public:
         return {
             "level": "exposed",
             "badge": "⚠️ LAN EXPOSED",
-            "reason": "Bound to 0.0.0.0 — accessible to all devices on your Wi-Fi/Ethernet network"
+            "reason": "Bound to 0.0.0.0 / all interfaces — accessible to devices on your local Wi-Fi/Ethernet network"
         }
 
-    # 7. Localhost Isolated (Safe Dev Server)
     return {
         "level": "safe",
         "badge": "🟢 SAFE LOCALHOST",
@@ -783,9 +957,20 @@ def get_active_listening_ports_metadata() -> List[Dict[str, Any]]:
                             proc = get_process_info_by_pid(pid)
                             pname = proc["name"].lower()
                             
+                            try:
+                                current_pid = os.getpid()
+                            except Exception:
+                                current_pid = -1
+
+                            is_this_app = (pid == current_pid) or (
+                                current_pid > 0 and pname.startswith("python") and any(d in proc["path"].lower() for d in ["volume_control", "server.py"])
+                            )
+
                             # Deduce friendly service identity
                             service_tag = ""
-                            if port in (8000, 8088):
+                            if is_this_app:
+                                service_tag = "Volume Cockpit Host (This App)"
+                            elif port in (8000, 8088) or "volume" in pname:
                                 service_tag = "Volume Control / FastAPI"
                             elif port in (5173, 5174):
                                 service_tag = "Vite Dev Server"
@@ -797,17 +982,39 @@ def get_active_listening_ports_metadata() -> List[Dict[str, Any]]:
                                 service_tag = "HTTP Web Service"
                             elif port == 4200:
                                 service_tag = "Angular Dev Server"
-                            elif port == 11434:
+                            elif port == 11434 or "ollama" in pname:
                                 service_tag = "Ollama Local AI"
-                            elif port == 27017:
+                            elif port == 27017 or "mongo" in pname:
                                 service_tag = "MongoDB Database"
-                            elif port == 5432:
+                            elif port == 5432 or "postgres" in pname:
                                 service_tag = "PostgreSQL Database"
-                            elif port == 3306:
+                            elif port == 3306 or "mysql" in pname:
                                 service_tag = "MySQL Database"
-                            elif port == 6379:
+                            elif port == 6379 or "redis" in pname:
                                 service_tag = "Redis Cache"
-                            elif pid <= 4 or "svchost" in pname:
+                            elif port == 5555 or "adb" in pname:
+                                service_tag = "Android Debug Bridge (ADB)"
+                            elif port == 5037:
+                                service_tag = "ADB Host Server"
+                            elif port == 1337 or "rzsdk" in pname or "razer" in pname:
+                                service_tag = "Razer Chroma SDK (RGB Lighting)" if ("rzsdk" in pname or "razer" in pname) else "Strapi / Dev Server"
+                            elif port in (6463, 6464) or "discord" in pname:
+                                service_tag = "Discord RPC Service"
+                            elif port == 445:
+                                service_tag = "Windows SMB File Sharing"
+                            elif port == 139:
+                                service_tag = "Windows NetBIOS Session"
+                            elif port == 135:
+                                service_tag = "Windows RPC Endpoint Mapper"
+                            elif port == 5357:
+                                service_tag = "Windows WSDAPI Device Discovery"
+                            elif port == 7680:
+                                service_tag = "Windows Update Delivery Optimization"
+                            elif port == 5040:
+                                service_tag = "Windows Connected Devices Service"
+                            elif 49152 <= port <= 65535 and (pid <= 4 or pname in CRITICAL_SYSTEM_PROCESSES or "svchost" in pname):
+                                service_tag = "Windows Dynamic RPC Service"
+                            elif pid <= 4 or "svchost" in pname or pname in CRITICAL_SYSTEM_PROCESSES:
                                 service_tag = "Windows System Service"
                             elif "python" in pname:
                                 service_tag = "Python Server Process"
@@ -830,17 +1037,24 @@ def get_active_listening_ports_metadata() -> List[Dict[str, Any]]:
                                 "local_address": local_addr,
                                 "service_tag": service_tag,
                                 "is_system": sec["level"] == "system" or pid <= 4,
+                                "is_current_app": is_this_app,
                                 "security_level": sec["level"],
                                 "security_badge": sec["badge"],
                                 "security_reason": sec["reason"],
                                 "bind_scope": "LAN / Public (0.0.0.0)" if is_public else "Localhost (127.0.0.1)",
-                                "can_kill": pid > 4 and sec["level"] != "system"
+                                "can_kill": (
+                                    not is_this_app
+                                    and pid > 4
+                                    and sec["level"] not in ("system", "app")
+                                    and pname not in CRITICAL_SYSTEM_PROCESSES
+                                    and not (proc["path"] and any(s in proc["path"].lower() for s in [r"windows\system32", r"windows\syswow64"]))
+                                )
                             }
     except Exception:
         pass
     
-    # Priority sorting: suspicious first (0), exposed next (1), safe next (2), system last (3)
-    prio_order = {"suspicious": 0, "exposed": 1, "safe": 2, "system": 3}
+    # Priority sorting: suspicious first (0), app next (1), exposed next (2), safe next (3), system last (4)
+    prio_order = {"suspicious": 0, "app": 1, "exposed": 2, "safe": 3, "system": 4}
     return sorted(ports_map.values(), key=lambda x: (prio_order.get(x["security_level"], 9), x["port"]))
 
 
@@ -848,12 +1062,6 @@ def get_active_listening_ports() -> List[int]:
     """Scans for active listening development ports."""
     meta = get_active_listening_ports_metadata()
     return [p["port"] for p in meta]
-
-
-CRITICAL_SYSTEM_PROCESSES = {
-    "system", "system idle process", "csrss.exe", "lsass.exe",
-    "services.exe", "smss.exe", "wininit.exe", "svchost.exe"
-}
 
 
 def kill_process_by_pid(pid: int) -> Dict[str, Any]:
@@ -901,7 +1109,6 @@ def get_system_telemetry() -> Dict[str, Any]:
     net = get_network_telemetry()
     power = get_power_telemetry()
     uptime = get_uptime_telemetry()
-    periphs = get_peripherals_telemetry()
     ports_meta = get_active_listening_ports_metadata()
     ports_list = [p["port"] for p in ports_meta]
 
@@ -916,7 +1123,6 @@ def get_system_telemetry() -> Dict[str, Any]:
         "network": net,
         "power": power,
         "uptime": uptime,
-        "peripherals": periphs,
         "listening_ports": ports_list,
         "ports_meta": ports_meta
     }
@@ -1000,6 +1206,43 @@ def kill_port(port: int) -> Dict[str, Any]:
         return {"success": True, "port": port, "pids": [], "message": f"Port {port} is free"}
     except Exception as e:
         return {"success": False, "port": port, "error": str(e)}
+
+
+def fix_suspicious_ports() -> Dict[str, Any]:
+    """
+    Scans active listening ports, identifies non-system suspicious or rogue listeners,
+    and safely terminates their processes to secure the system.
+    Returns audit details and updated port state.
+    """
+    ports = get_active_listening_ports_metadata()
+    suspicious = [p for p in ports if p.get("security_level") == "suspicious" and p.get("can_kill")]
+
+    fixed = []
+    failed = []
+
+    for sp in suspicious:
+        port = sp["port"]
+        pid = sp["pid"]
+        proc_name = sp.get("process_name", "Unknown")
+        res = kill_port(port)
+        if res.get("success") and res.get("killed_pids"):
+            fixed.append({"port": port, "pid": pid, "process_name": proc_name})
+        else:
+            failed.append({"port": port, "pid": pid, "process_name": proc_name})
+
+    updated_ports = get_active_listening_ports_metadata()
+    remaining = sum(1 for p in updated_ports if p.get("security_level") == "suspicious")
+
+    msg = f"Secured and closed {len(fixed)} suspicious port(s)." if fixed else "All ports audited: No vulnerable or rogue listeners found."
+    return {
+        "success": True,
+        "fixed_count": len(fixed),
+        "fixed_ports": fixed,
+        "failed_ports": failed,
+        "remaining_suspicious": remaining,
+        "message": msg,
+        "ports": updated_ports
+    }
 
 
 # -------------------------------------------------------------

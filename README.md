@@ -10,26 +10,25 @@ A self-hosted, touch-optimized web application to control Windows master audio, 
   - Install to your phone's Home Screen or PC desktop for a standalone, full-screen app experience without browser navigation bars.
   - Offline-first shell caching powered by a dedicated Service Worker (`sw.js`) and Web App Manifest (`manifest.json`).
   - High-resolution adaptive icons (192x192, 512x512, and SVG).
-- **👆 Tap to Mute & Tactile Gestures:**
+- **👆 Tap to Mute, Tactile Gestures & Spotify Perceptual Volume:**
   - Big, satisfying tactile tiles for Master Volume and each running app. Tapping or clicking any tile instantly toggles Mute / Unmute.
   - Press and hold any tile (or slide horizontally) — the tile smoothly grows into an active slider with a glowing track. Slide **LEFT** to decrease and **RIGHT** to increase!
-  - Touch-optimized without sticky hover states on mobile/touchscreens.
+  - **Spotify Perceptual Cubic Slider:** Automatically detects Spotify and uses Spotify's native cubic curve $(\text{amplitude} = (\text{slider}/100)^3)$ so that 50% on your phone matches 50% in Spotify.
 - **🔌 Active Ports & Socket Security Cockpit:**
-  - Real-time listening port scanner displaying local interfaces, PID, protocol, and full executable paths.
+  - Real-time listening port scanner displaying local interfaces, PID, protocol, security badge, and full executable paths.
   - **Security Triage Engine:** Automatically flags ports as:
-    - `🚨 SUSPICIOUS / HIGH RISK`: Trojan listeners, backdoor targets, executables running from `Temp`/`Downloads`, or databases (`Redis`, `MongoDB`) exposed on `0.0.0.0`.
-    - `⚠️ LAN EXPOSED`: Dev servers listening on `0.0.0.0` accessible across the local network.
+    - `💎 THIS APP`: Server socket owned by this Volume Control instance (self-termination protected).
+    - `🚨 SUSPICIOUS / HIGH RISK`: Trojan listeners, backdoor targets, spoofed system executables, or binaries in `Temp`/`Downloads`.
+    - `⚠️ LAN EXPOSED`: Development servers or databases listening on `0.0.0.0` accessible across the local network.
     - `🟢 SAFE LOCALHOST`: Developer sockets safely isolated to `127.0.0.1` loopback.
-    - `🛡️ SYSTEM`: Core protected Windows kernel sockets (`PID <= 4`, `svchost.exe`).
-  - One-click port killer to terminate hung servers (with protected system process safeguards).
+    - `🛡️ SYSTEM`: Core protected Windows kernel sockets (`PID <= 4`, `svchost.exe`, `lsass.exe`).
+  - One-click **🛡️ Fix & Secure All** button and individual port killer to terminate hung servers (with protected system process safeguards).
+- **🚀 Dynamic Island Windows Start Menu & App Launcher:**
+  - Dynamic Island pill with interactive search and one-tap launching for all installed Windows applications.
 - **🌙 Dim-Lit OLED Standby HUD:**
   - Fullscreen battery-saver HUD with real hardware telemetry (CPU, GPU, RAM, Network sparklines, Power, Uptime).
   - Strict `dvh` zero-scroll layout with subtle OLED anti-burn-in drift.
   - Dual-layer wake guard (600ms debounce delay) preventing accidental click-throughs or double-clicks on home screen buttons upon waking.
-- **🚀 Windows App Launcher:**
-  - Automatically indexes Windows Start Menu apps and common tools for instant remote launching.
-- **📝 Granular Brain Dump & Notes:**
-  - Local task, bug, and idea scratchpad with categorization, priority levels, and Markdown export.
 - **🐾 Dynamic Roaming Pixel Mascot ("Byte"):**
   - Interactive companion that roams your cockpit, reacts to volume adjustments, sleeps during standby, and levels up with XP.
 - **⚡ Custom PC Shortcuts & Layouts Deck:**

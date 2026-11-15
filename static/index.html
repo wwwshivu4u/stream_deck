@@ -540,8 +540,6 @@
       40% { transform: translateY(-16px) scale(1.12); }
       70% { transform: translateY(-3px); }
     }
-      100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    }
 
     .pet-zzz {
       position: absolute;
@@ -1201,9 +1199,6 @@
       justify-content: center;
       margin-top: 0 !important;
       padding: 0 !important;
-    }
-      letter-spacing: 0.04em;
-      flex-shrink: 0;
     }
 
     .icon-btn {
@@ -1989,7 +1984,7 @@
     /* Enhanced Ports Menu & Security Audit Cockpit */
     .ports-triage-summary-bar {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
       gap: 6px;
       margin-bottom: 10px;
     }
@@ -2007,6 +2002,11 @@
       cursor: pointer;
       touch-action: manipulation;
       transition: all 0.15s ease;
+    }
+    .ports-triage-item.sec-app {
+      background: rgba(168, 85, 247, 0.14);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #d8b4fe;
     }
     .ports-triage-item.sec-suspicious {
       background: rgba(239, 68, 68, 0.14);
@@ -2066,6 +2066,11 @@
       border-color: rgba(59, 130, 246, 0.5);
       color: #93c5fd;
     }
+    .ports-filter-pill.sec-app.active {
+      background: rgba(168, 85, 247, 0.25);
+      border-color: #a855f7;
+      color: #e9d5ff;
+    }
     .ports-filter-pill.sec-suspicious.active {
       background: rgba(239, 68, 68, 0.25);
       border-color: #ef4444;
@@ -2105,6 +2110,11 @@
       flex-direction: column;
       gap: 6px;
       transition: all 0.15s ease;
+    }
+    .port-meta-card.sec-app {
+      background: rgba(168, 85, 247, 0.08);
+      border-color: rgba(168, 85, 247, 0.5);
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.15);
     }
     .port-meta-card.sec-suspicious {
       background: rgba(239, 68, 68, 0.08);
@@ -2150,6 +2160,11 @@
       text-align: center;
       letter-spacing: -0.02em;
       flex-shrink: 0;
+    }
+    .port-num-badge.sec-app {
+      color: #e9d5ff;
+      background: rgba(168, 85, 247, 0.22);
+      border-color: rgba(168, 85, 247, 0.5);
     }
     .port-num-badge.sec-suspicious {
       color: #fca5a5;
@@ -2203,6 +2218,11 @@
       border-radius: 999px;
       letter-spacing: 0.03em;
       white-space: nowrap;
+    }
+    .port-sec-badge.sec-app {
+      background: rgba(168, 85, 247, 0.25);
+      color: #f3e8ff;
+      border: 1px solid rgba(168, 85, 247, 0.5);
     }
     .port-sec-badge.sec-suspicious {
       background: rgba(239, 68, 68, 0.25);
@@ -2266,6 +2286,11 @@
       align-items: flex-start;
       gap: 6px;
       margin-top: 2px;
+    }
+    .port-sec-reason-box.sec-app {
+      background: rgba(168, 85, 247, 0.15);
+      color: #f3e8ff;
+      border-left: 3px solid #a855f7;
     }
     .port-sec-reason-box.sec-suspicious {
       background: rgba(239, 68, 68, 0.15);
@@ -3686,6 +3711,10 @@
 
       <!-- Security Assessment Summary Triage Bar -->
       <div class="ports-triage-summary-bar">
+        <div class="ports-triage-item sec-app" id="triage-box-app" data-filter="app" title="View Ports used by this Application">
+          <span class="triage-icon">💎</span>
+          <span class="triage-text" id="ports-stat-app">0 This App</span>
+        </div>
         <div class="ports-triage-item sec-suspicious" id="triage-box-suspicious" data-filter="suspicious" title="View Suspicious / Risky Ports">
           <span class="triage-icon">🚨</span>
           <span class="triage-text" id="ports-stat-suspicious">0 Suspicious</span>
@@ -3704,10 +3733,22 @@
         </div>
       </div>
 
+      <!-- Suspicious Ports Action Banner -->
+      <div id="ports-fix-banner" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; align-items: center; justify-content: space-between; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: #fca5a5;">
+          <span>🚨</span>
+          <span><b id="suspicious-banner-text">0 Suspicious Ports</b> &bull; Potential vulnerability detected</span>
+        </div>
+        <button id="ports-fix-all-btn" class="port-kill-action-btn is-suspicious" style="padding: 5px 12px; font-size: 0.76rem; white-space: nowrap;">
+          🛡️ Fix & Secure All
+        </button>
+      </div>
+
       <!-- Filter Tabs & Real-Time Search -->
       <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;">
         <div class="ports-filter-bar" id="ports-filter-pills">
           <button class="ports-filter-pill active" data-filter="all">All (<span id="count-ports-all">0</span>)</button>
+          <button class="ports-filter-pill sec-app" data-filter="app">💎 This App (<span id="count-ports-app">0</span>)</button>
           <button class="ports-filter-pill sec-suspicious" data-filter="suspicious">🚨 Suspicious (<span id="count-ports-suspicious">0</span>)</button>
           <button class="ports-filter-pill sec-exposed" data-filter="exposed">⚠️ LAN Exposed (<span id="count-ports-exposed">0</span>)</button>
           <button class="ports-filter-pill sec-safe" data-filter="safe">🟢 Safe (<span id="count-ports-safe">0</span>)</button>
@@ -6086,12 +6127,14 @@
     let currentPortsFilter = 'all';
     let portsSearchQuery = '';
 
+    const portsStatApp = document.getElementById('ports-stat-app');
     const portsStatSuspicious = document.getElementById('ports-stat-suspicious');
     const portsStatExposed = document.getElementById('ports-stat-exposed');
     const portsStatSafe = document.getElementById('ports-stat-safe');
     const portsStatSystem = document.getElementById('ports-stat-system');
     const portsSearchFilter = document.getElementById('ports-search-filter');
     const countPortsAll = document.getElementById('count-ports-all');
+    const countPortsApp = document.getElementById('count-ports-app');
     const countPortsSuspicious = document.getElementById('count-ports-suspicious');
     const countPortsExposed = document.getElementById('count-ports-exposed');
     const countPortsSafe = document.getElementById('count-ports-safe');
@@ -6121,21 +6164,35 @@
     }
 
     function updatePortsTriageStats(data) {
+      const appCount = data.app_count ?? currentPortsList.filter(p => p.security_level === 'app').length;
       const suspiciousCount = data.suspicious_count ?? currentPortsList.filter(p => p.security_level === 'suspicious').length;
       const exposedCount = data.exposed_count ?? currentPortsList.filter(p => p.security_level === 'exposed').length;
       const safeCount = data.safe_count ?? currentPortsList.filter(p => p.security_level === 'safe').length;
       const systemCount = data.system_count ?? currentPortsList.filter(p => p.security_level === 'system').length;
 
+      if (portsStatApp) portsStatApp.textContent = `${appCount} This App`;
       if (portsStatSuspicious) portsStatSuspicious.textContent = `${suspiciousCount} Suspicious`;
       if (portsStatExposed) portsStatExposed.textContent = `${exposedCount} LAN Exposed`;
       if (portsStatSafe) portsStatSafe.textContent = `${safeCount} Safe Local`;
       if (portsStatSystem) portsStatSystem.textContent = `${systemCount} System`;
 
       if (countPortsAll) countPortsAll.textContent = currentPortsList.length;
+      if (countPortsApp) countPortsApp.textContent = appCount;
       if (countPortsSuspicious) countPortsSuspicious.textContent = suspiciousCount;
       if (countPortsExposed) countPortsExposed.textContent = exposedCount;
       if (countPortsSafe) countPortsSafe.textContent = safeCount;
       if (countPortsSystem) countPortsSystem.textContent = systemCount;
+
+      const portsFixBanner = document.getElementById('ports-fix-banner');
+      const suspiciousBannerText = document.getElementById('suspicious-banner-text');
+      if (portsFixBanner && suspiciousBannerText) {
+        if (suspiciousCount > 0) {
+          portsFixBanner.style.display = 'flex';
+          suspiciousBannerText.textContent = `${suspiciousCount} Suspicious Port${suspiciousCount > 1 ? 's' : ''}`;
+        } else {
+          portsFixBanner.style.display = 'none';
+        }
+      }
     }
 
     function renderPortsCards(portsOverride) {
@@ -6178,9 +6235,17 @@
               <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 3px;">No active development servers, listening sockets, or suspicious listeners found.</div>
             </div>
           `;
+        } else if (currentPortsFilter === 'app') {
+          hudPortsCardsList.innerHTML = `
+            <div style="background: rgba(168, 85, 247, 0.08); border: 1px dashed rgba(168, 85, 247, 0.35); border-radius: 12px; padding: 20px; text-align: center;">
+              <div style="font-size: 1.5rem; margin-bottom: 4px;">💎</div>
+              <div style="font-size: 0.85rem; font-weight: 800; color: #d8b4fe;">No App-Owned Ports Active</div>
+              <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">The Python server host process is not listening on any ports matching this filter.</div>
+            </div>
+          `;
         } else if (currentPortsFilter === 'suspicious') {
           hudPortsCardsList.innerHTML = `
-            <div style="background: rgba(16, 185, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 20px; text-align: center;">
+            <div style="background: rgba(168, 85, 129, 0.08); border: 1px dashed rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 20px; text-align: center;">
               <div style="font-size: 1.5rem; margin-bottom: 4px;">🛡️</div>
               <div style="font-size: 0.85rem; font-weight: 800; color: #34d399;">0 Suspicious Ports Detected</div>
               <div style="font-size: 0.72rem; color: #94a3b8; margin-top: 2px;">No trojan listeners, malware ports, unisolated Redis, or temp-path sockets active.</div>
@@ -6202,6 +6267,7 @@
       filtered.forEach(p => {
         const card = document.createElement('div');
         const secLevel = p.security_level || 'safe';
+        const isApp = secLevel === 'app' || p.is_current_app;
         const isSuspicious = secLevel === 'suspicious';
         const isExposed = secLevel === 'exposed';
         const isSystem = secLevel === 'system';
@@ -6209,16 +6275,20 @@
         card.className = `port-meta-card sec-${secLevel}`;
         
         let icon = '⚙️';
-        const pname = (p.process_name || '').toLowerCase();
-        if (pname.includes('python')) icon = '🐍';
-        else if (pname.includes('node') || pname.includes('npm')) icon = '🟩';
-        else if (pname.includes('code')) icon = '💻';
-        else if (pname.includes('chrome') || pname.includes('edge')) icon = '🌐';
-        else if (pname.includes('discord')) icon = '💬';
-        else if (pname.includes('redis')) icon = '🟥';
-        else if (pname.includes('mongo')) icon = '🍃';
-        else if (pname.includes('postgres') || pname.includes('mysql')) icon = '🐬';
-        else if (isSuspicious) icon = '⚠️';
+        if (isApp) {
+          icon = '💎';
+        } else {
+          const pname = (p.process_name || '').toLowerCase();
+          if (pname.includes('python')) icon = '🐍';
+          else if (pname.includes('node') || pname.includes('npm')) icon = '🟩';
+          else if (pname.includes('code')) icon = '💻';
+          else if (pname.includes('chrome') || pname.includes('edge')) icon = '🌐';
+          else if (pname.includes('discord')) icon = '💬';
+          else if (pname.includes('redis')) icon = '🟥';
+          else if (pname.includes('mongo')) icon = '🍃';
+          else if (pname.includes('postgres') || pname.includes('mysql')) icon = '🐬';
+          else if (isSuspicious) icon = '⚠️';
+        }
 
         const scopeTagClass = isExposed ? 'scope-lan' : 'scope-local';
         const scopeText = p.bind_scope || (p.local_address && p.local_address.startsWith('0.0.0.0') ? 'LAN / Public (0.0.0.0)' : 'Localhost (127.0.0.1)');
@@ -6239,7 +6309,9 @@
               </div>
             </div>
             <div class="port-card-action">
-              ${p.can_kill ? `
+              ${isApp ? `
+                <span class="port-system-badge" style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.4); color: #d8b4fe;" title="Active server socket owned by this Volume Control instance. Self-termination protected.">💎 Current App Host</span>
+              ` : p.can_kill ? `
                 <button class="port-kill-action-btn ${isSuspicious ? 'is-suspicious' : ''}" title="Terminate process ${p.process_name} (PID ${p.pid}) on port ${p.port}" data-port="${p.port}">
                   ${isSuspicious ? '🚨 Terminate' : '✕ Close'}
                 </button>
@@ -6251,8 +6323,8 @@
 
           ${p.security_reason ? `
             <div class="port-sec-reason-box sec-${secLevel}">
-              <span style="font-size: 0.8rem; flex-shrink: 0;">${isSuspicious ? '🚨' : isExposed ? '⚠️' : isSystem ? '🛡️' : '🟢'}</span>
-              <span><b>${isSuspicious ? 'Security Alert:' : isExposed ? 'LAN Exposure:' : isSystem ? 'System Service:' : 'Audit Note:'}</b> ${p.security_reason}</span>
+              <span style="font-size: 0.8rem; flex-shrink: 0;">${isApp ? '💎' : isSuspicious ? '🚨' : isExposed ? '⚠️' : isSystem ? '🛡️' : '🟢'}</span>
+              <span><b>${isApp ? 'Application Socket:' : isSuspicious ? 'Security Alert:' : isExposed ? 'LAN Exposure:' : isSystem ? 'System Service:' : 'Audit Note:'}</b> ${p.security_reason}</span>
             </div>
           ` : ''}
 
@@ -6412,6 +6484,29 @@
       refreshPortsBtn.addEventListener('click', () => {
         haptic(30);
         fetchAndRenderPorts();
+      });
+    }
+    const portsFixAllBtn = document.getElementById('ports-fix-all-btn');
+    if (portsFixAllBtn) {
+      portsFixAllBtn.addEventListener('click', async () => {
+        haptic(50);
+        portsFixAllBtn.disabled = true;
+        const originalText = portsFixAllBtn.textContent;
+        portsFixAllBtn.textContent = 'Securing...';
+        try {
+          const res = await fetch('/api/system/ports/fix-suspicious', { method: 'POST' });
+          const data = await res.json();
+          showToast(data.message || 'Suspicious ports resolved!', '🛡️');
+          addPetXp(25);
+          setPetMood('happy');
+          fetchAndRenderPorts();
+          pollTelemetry();
+        } catch (e) {
+          showToast('Failed to fix ports', '✕', true);
+        } finally {
+          portsFixAllBtn.disabled = false;
+          portsFixAllBtn.textContent = originalText;
+        }
       });
     }
     portsModal?.addEventListener('click', (e) => {

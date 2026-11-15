@@ -350,6 +350,7 @@ def get_telemetry_endpoint():
 @app.get("/api/system/ports")
 def get_ports_endpoint():
     ports_meta = system_controller.get_active_listening_ports_metadata()
+    app_count = sum(1 for p in ports_meta if p.get("security_level") == "app")
     suspicious_count = sum(1 for p in ports_meta if p.get("security_level") == "suspicious")
     exposed_count = sum(1 for p in ports_meta if p.get("security_level") == "exposed")
     safe_count = sum(1 for p in ports_meta if p.get("security_level") == "safe")
@@ -357,11 +358,17 @@ def get_ports_endpoint():
     return {
         "ports": ports_meta,
         "count": len(ports_meta),
+        "app_count": app_count,
         "suspicious_count": suspicious_count,
         "exposed_count": exposed_count,
         "safe_count": safe_count,
         "system_count": system_count
     }
+
+
+@app.post("/api/system/ports/fix-suspicious")
+def fix_suspicious_ports_endpoint():
+    return system_controller.fix_suspicious_ports()
 
 
 @app.post("/api/system/kill-port")
