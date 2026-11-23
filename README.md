@@ -14,6 +14,27 @@ A self-hosted, touch-optimized web application to control Windows master audio, 
   - Big, satisfying tactile tiles for Master Volume and each running app. Tapping or clicking any tile instantly toggles Mute / Unmute.
   - Press and hold any tile (or slide horizontally) — the tile smoothly grows into an active slider with a glowing track. Slide **LEFT** to decrease and **RIGHT** to increase!
   - **Spotify Perceptual Cubic Slider:** Automatically detects Spotify and uses Spotify's native cubic curve $(\text{amplitude} = (\text{slider}/100)^3)$ so that 50% on your phone matches 50% in Spotify.
+- **📁 Application Grouping & Submenu View:**
+  - Automatically bundles multi-stream apps (such as multiple browser audio tabs or Discord streams) into interactive Folder cards.
+  - Tapping a folder card opens a dedicated Submenu View displaying a Group Master Volume slider and individual sub-streams, eliminating clutter and vertical scrolling.
+- **📐 Device-Adaptive Zero-Scroll Multi-Column Layout:**
+  - Applications list dynamically measures the available vertical space on any device (desktop, tablet, mobile, or rotated screen).
+  - Starts with 1 full-width column (100% width) filling top-to-bottom.
+  - When the first column's vertical space fills up, it automatically adds a 2nd column at 50% width.
+  - When the 2nd column is full, it expands to 3 columns at 33.33% width, guaranteeing zero vertical scrolling.
+- **🔀 Smart Applications Sorting:**
+  - Quickly sort running applications by:
+    - **Name:** Alphabetical order.
+    - **PID:** Process identifier.
+    - **🔥 Most Used:** Frequency-based usage ranking with automated weekly reset to keep your active favorites prioritized.
+- **⚡ 4:3 Tactile Quick Actions Deck:**
+  - Enlarged 4:3 aspect ratio touch pads for instant media controls, PC power actions, and window layouts.
+- **🏝️ Dynamic Island with Interactive Standby & Start Menu:**
+  - Floating bottom island providing one-tap access to Windows App Launcher, Pomodoro focus timer, AI assistant, and Discord deafen toggle.
+  - **Interactive Standby Button:** Styled with an amber warning accent:
+    - **Tap:** Instantly enters the Standby HUD.
+    - **Hold (650ms):** Toggles the Auto-Standby timer (with live `AUTO` badge indicator and haptic feedback). When deactivated, standby only engages on manual click.
+  - Touch-stabilized margin centering to prevent horizontal shifting or overflow on mobile devices.
 - **🔌 Active Ports & Socket Security Cockpit:**
   - Real-time listening port scanner displaying local interfaces, PID, protocol, security badge, and full executable paths.
   - **Security Triage Engine:** Automatically flags ports as:
@@ -23,16 +44,12 @@ A self-hosted, touch-optimized web application to control Windows master audio, 
     - `🟢 SAFE LOCALHOST`: Developer sockets safely isolated to `127.0.0.1` loopback.
     - `🛡️ SYSTEM`: Core protected Windows kernel sockets (`PID <= 4`, `svchost.exe`, `lsass.exe`).
   - One-click **🛡️ Fix & Secure All** button and individual port killer to terminate hung servers (with protected system process safeguards).
-- **🚀 Dynamic Island Windows Start Menu & App Launcher:**
-  - Dynamic Island pill with interactive search and one-tap launching for all installed Windows applications.
 - **🌙 Dim-Lit OLED Standby HUD:**
   - Fullscreen battery-saver HUD with real hardware telemetry (CPU, GPU, RAM, Network sparklines, Power, Uptime).
   - Strict `dvh` zero-scroll layout with subtle OLED anti-burn-in drift.
   - Dual-layer wake guard (600ms debounce delay) preventing accidental click-throughs or double-clicks on home screen buttons upon waking.
 - **🐾 Dynamic Roaming Pixel Mascot ("Byte"):**
   - Interactive companion that roams your cockpit, reacts to volume adjustments, sleeps during standby, and levels up with XP.
-- **⚡ Custom PC Shortcuts & Layouts Deck:**
-  - Trigger PC commands, media keys, and window layouts directly from your phone.
 - **🤖 100% Offline Voice NLP Assistant:**
   - Hands-free natural language voice commands via local rule engine or local Ollama AI.
 - **🔒 100% Offline & Private:**
@@ -83,27 +100,31 @@ python server.py --host 0.0.0.0 --port 5000 --ssl
 
 ```text
 volume_control/
-├── AudioEngine.cs       # Native Windows WASAPI interop (C#)
-├── AudioEngine.exe      # Compiled high-performance audio engine
-├── audio_manager.py     # Python bridge & volume cache module
-├── audio.py             # Compatibility alias
-├── system_controller.py # Hardware monitor, Win32 window manager & port security audit
-├── shortcuts_manager.py # Custom shortcuts & macros manager
-├── shortcuts.json       # Persistent default shortcuts storage
-├── app_launcher.py      # Windows App Launcher & Start Menu scanner
-├── notes_manager.py     # Granular brain dump notes engine
-├── nlp_agent.py         # 100% local Natural Language Processing agent
-├── server.py            # FastAPI local server with PWA routes & security breakdown
-├── build.bat            # Recompiles AudioEngine.cs via .NET csc.exe
-├── run.bat              # One-click startup script (HTTP)
-├── run_ssl.bat          # One-click startup script (HTTPS)
-├── requirements.txt     # Python dependencies
+├── AudioEngine.cs           # Native Windows WASAPI interop (C#)
+├── AudioEngine.exe          # Compiled high-performance audio engine
+├── audio_manager.py         # Python bridge & volume cache module
+├── audio.py                 # Compatibility alias
+├── system_controller.py     # Hardware monitor, Win32 window manager & port security audit
+├── shortcuts_manager.py     # Custom shortcuts & macros manager
+├── shortcuts.json           # Persistent default shortcuts storage
+├── app_launcher.py          # Windows App Launcher & Start Menu scanner
+├── notes_manager.py         # Granular brain dump notes engine
+├── nlp_agent.py             # 100% local Natural Language Processing agent
+├── server.py                # FastAPI local server with PWA routes & security breakdown
+├── build.bat                # Recompiles AudioEngine.cs via .NET csc.exe
+├── run.bat                  # One-click startup script (HTTP)
+├── run_ssl.bat              # One-click startup script (HTTPS)
+├── test_ports_security.py   # Unit tests for port triage & security engine
+├── test_spotify_volume.py   # Unit tests for Spotify perceptual volume curves
+├── requirements.txt         # Python dependencies
 ├── static/
-│   ├── index.html       # Cockpit HUD, Standby mode, gesture sliders & ports triage UI
-│   ├── manifest.json    # PWA Web App Manifest
-│   ├── sw.js            # PWA Service Worker for offline shell caching
-│   ├── icon.svg         # Scalable vector app icon
-│   ├── icon-192.png     # 192x192 PWA app icon
-│   └── icon-512.png     # 512x512 PWA app icon
-└── README.md            # Documentation
+│   ├── index.html           # Cockpit HUD, Standby mode & UI markup
+│   ├── style.css            # Tactile styling, dynamic columns, and zero-scroll layout
+│   ├── app.js               # Reactive client state, gesture tracking & WebSocket sync
+│   ├── manifest.json        # PWA Web App Manifest
+│   ├── sw.js                # PWA Service Worker for offline shell caching
+│   ├── icon.svg             # Scalable vector app icon
+│   ├── icon-192.png         # 192x192 PWA app icon
+│   └── icon-512.png         # 512x512 PWA app icon
+└── README.md                # Documentation
 ```
