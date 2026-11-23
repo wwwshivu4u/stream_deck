@@ -1,7 +1,9 @@
-const CACHE_NAME = 'volumemixer-v2';
+const CACHE_NAME = 'volumemixer-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
+  '/static/style.css',
+  '/static/app.js',
   '/static/icon-192.png',
   '/static/icon-512.png',
   '/static/icon.svg'

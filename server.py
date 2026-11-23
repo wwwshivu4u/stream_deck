@@ -132,6 +132,22 @@ def get_favicon():
     return JSONResponse(status_code=404, content={"message": "favicon not found"})
 
 
+@app.get("/style.css")
+def get_style_root():
+    path = os.path.join(STATIC_DIR, "style.css")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="text/css")
+    return JSONResponse(status_code=404, content={"message": "style.css not found"})
+
+
+@app.get("/app.js")
+def get_app_js_root():
+    path = os.path.join(STATIC_DIR, "app.js")
+    if os.path.exists(path):
+        return FileResponse(path, media_type="application/javascript")
+    return JSONResponse(status_code=404, content={"message": "app.js not found"})
+
+
 if os.path.isdir(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
